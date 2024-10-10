@@ -1,0 +1,182 @@
+/* FILEPATH: /homer/assets/custom.css */
+
+/* Define CSS variables */
+:root {
+    --background-color: black; /* Background color */
+    --text-color: orange; /* Text color */
+    --primary-color: DarkBlue; /* Primary color */
+    --link-color: orange; /* Link color */
+    --button-background-color: orange; /* Button background color */
+    --button-text-color: black; /* Button text color */
+    --button-hover-background-color: black; /* Button hover background color */
+    --button-hover-text-color: orange; /* Button hover text color */
+    --input-background-color: black; /* Input background color */
+    --input-text-color: orange; /* Input text color */
+    --input-border-color: orange; /* Input border color */
+    --card-box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05), 0 0.5px 1px rgba(0, 0, 0, 0.04); /* Card box shadow */
+    --card-filter: drop-shadow(0 0 1.5px rgba(255, 0, 0, 0.25))
+        drop-shadow(0 0 3px rgba(255, 165, 0, 0.25))
+        drop-shadow(0 0 4.5px rgba(255, 255, 0, 0.25))
+        drop-shadow(0 0 6px rgba(0, 128, 0, 0.25))
+        drop-shadow(0 0 7.5px rgba(0, 0, 255, 0.25))
+        drop-shadow(0 0 10.5px rgba(238, 130, 238, 0.25)); /* Card filter */
+    --text-shadow: 0 0 13px #ff0000, 0 0 15px #ff0000; /* Text shadow */
+}
+
+/* Reset default styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Body styles */
+body {
+    background-color: var(--background-color); /* Set background color */
+    color: var(--text-color); /* Set text color */
+    font-family: Arial, sans-serif; /* Set font family */
+}
+
+body h1, .logo img, .headline, .dashboard-title {
+    text-align: center; /* Center align */
+    font-weight: bold; /* Set font weight */
+    letter-spacing: 0.1em; /* Set letter spacing */
+    text-shadow: var(--text-shadow); /* Set text shadow */
+}
+
+body h1 {
+    font-family: "Tourney", sans-serif; /* Set font family */
+    color: var(--primary-color); /* Set color */
+    text-shadow: var(--text-shadow); /* Set text shadow */
+    font-size: 24px; /* Set font size */
+    padding: 1rem; /* Set padding */
+    font-size: 6rem; /* Set font size */
+}
+
+/* Link styles */
+a {
+    color: var(--link-color); /* Set color */
+    text-decoration: none; /* Remove underline */
+}
+
+a:hover {
+    text-decoration: underline; /* Add underline on hover */
+}
+
+/* Button styles */
+button {
+    background-color: var(--button-background-color); /* Set background color */
+    color: var(--button-text-color); /* Set text color */
+    border: none; /* Remove border */
+    padding: 10px 20px; /* Set padding */
+    font-size: 16px; /* Set font size */
+    cursor: pointer; /* Set cursor */
+}
+
+button:hover {
+    background-color: var(--button-hover-background-color); /* Set background color on hover */
+    color: var(--button-hover-text-color); /* Set text color on hover */
+}
+
+.container:hover .card{
+    filter:blur(0.5px); /* Apply blur effect on hover */
+    transform: scale(0.8); /* Scale down on hover */
+    opacity: 0.85; /* Reduce opacity on hover */
+}
+
+.container .card:hover {
+    filter:blur(0); /* Remove blur effect on hover */
+    transform: scale(1); /* Scale back to normal on hover */
+    opacity: 1.05; /* Increase opacity on hover */
+}
+
+/* Input styles */
+input[type="text"], input[type="email"], input[type="password"] {
+    background-color: var(--input-background-color); /* Set background color */
+    color: var(--input-text-color); /* Set text color */
+    border: 1px solid var(--input-border-color); /* Set border */
+    padding: 5px 10px; /* Set padding */
+    font-size: 14px; /* Set font size */
+}
+
+input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focus {
+    outline: none; /* Remove outline on focus */
+    border-color: var(--input-border-color); /* Set border color on focus */
+}
+
+.card {
+    box-shadow: var(--card-box-shadow); /* Set box shadow */
+    filter: var(--card-filter); /* Apply filter */
+    display: flex; /* Set display to flex */
+    flex-direction: column; /* Set flex direction to column */
+    justify-content: space-between; /* Space between items */
+    align-items: left; /* Align items to left */
+    width: 100%; /* Set width to 100% */
+    max-width: 100%; /* Set max width to 100% */
+    height: flex; /* Set height to flex */
+}
+
+.grid-container {
+    display: grid; /* Set display to grid */
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); /* Set grid template columns */
+}
+
+.columns:not(.is-desktop) {
+    display: flex; /* Set display to flex */
+    flex-wrap: wrap; /* Wrap items */
+}
+
+.columns.is-multiline {
+    flex-wrap: wrap; /* Wrap items */
+}
+
+.column.is-4, .column.is-4-tablet
+{
+    flex: none !important; /* Disable flex */
+    width: 33.3333%; /* Set width */
+}
+
+/* Importing the 'color' module */
+@import 'color';
+
+/* Custom property for background angle */
+@property --bg-angle {
+  inherits: false;
+  initial-value: 0deg;
+  syntax: "<angle>";
+}
+
+/* Keyframes animation */
+@keyframes spin {
+  to {
+    --bg-angle: 360deg;
+  }
+}
+
+/* Styling for the 'article' element */
+article {
+  /* Add the 'spin' animation, but pause it by default */
+  animation: spin 2s infinite linear paused;
+
+  /* Background styling */
+  background:
+    /* Background colors don’t work with `background-origin`, so use a gradient. */
+    linear-gradient(
+      to bottom,
+      oklch(0.1 0.2 240 / 0.95),
+      oklch(0.1 0.2 240 / 0.95)
+    ) padding-box,
+    /* ends at inner border edges */
+    conic-gradient(
+      from var(--bg-angle) in oklch longer hue,
+      oklch(0.85 0.37 0) 0 0
+    ) border-box; /* extends to outer border edges */
+
+  /* A clear border lets the background gradient shine through */
+  border: 6px solid transparent;
+
+  /* Unpause the animation on hover */
+  &:hover {
+    animation-play-state: running;
+}}
+

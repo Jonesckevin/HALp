@@ -1,0 +1,124 @@
+title: "HALp"
+subtitle: "Dashboard"
+icon: "fas fa-skull-crossbones"
+header: true
+footer: false
+columns: "4"
+defaults:
+    layout: list
+    colorTheme: dark
+stylesheet:
+    - "assets/custom.css"
+colors:
+  light:
+    highlight-primary: "#3367d6"
+    highlight-secondary: "#4285f4"
+    highlight-hover: "#5a95f5"
+    background: "#f5f5f5"
+    card-background: "#ffffff"
+    text: "#363636"
+    text-header: "#ffffff"
+    text-title: "#303030"
+    text-subtitle: "#424242"
+    card-shadow: rgba(0, 0, 0, 0.1)
+    link: "#3273dc"
+    link-hover: "#363636"
+  dark:
+    highlight-primary: "#b4770e"
+    highlight-secondary: transparent
+    highlight-hover: "#5a95f5"
+    background: "#131313"
+    card-background: "#2b2b2b"
+    card-shadow: ""rgba(0, 0, 0, 0.5)""
+    text: "#eaeaea"
+    text-header: "#ddd"
+    text-title: "#eaeaea"
+    text-subtitle: "#e5e5e5"
+    link: "#b4770e"
+    link-hover: "#ffdd57"
+links:
+  - name: "Home"
+    icon: "fas fa-server"
+    url: "http://$HOSTIP:$HOMERPORT"
+  - name: "MedaWiki"
+    icon: "fas fa-book"
+    url: "http://$HOSTIP:$BOOKSTACKPORT/"
+  - name: "SecondPage!"
+    icon: "fas fa-copy"
+    url: "#SoP_Pages"
+services:
+  - name: ""
+    items:
+      - name: "Homer"
+        logo: "assets/tools/homer.png"
+        url: "http://$HOSTIP:$HOMERPORT"
+        subtitle: ""
+        tag: ""
+        keywords: ""
+
+    items:
+      - name: "VaultWarden"
+        logo: "assets/tools/vaultwarden-light.png"
+        url: "http://$HOSTIP:$VAULTPORT"
+
+      - name: "Portainer"
+        logo: "assets/tools/portainer.png"
+        url: "http://$HOSTIP:$PORTAINERPORT"
+
+  - name: ""
+    items:
+      - name: "Planka"
+        logo: "assets/tools/planka.png"
+        url: "http://$HOSTIP:$PLANKAPORT"
+
+      - name: "BookStack"
+        logo: "assets/tools/bookstack.png"
+        url: "http://$HOSTIP:$BOOKSTACKPORT"
+
+      - name: "Paperless"
+        logo: "assets/tools/paperless.png"
+        url: "http://$HOSTIP:$PAPERLESSPORT"
+
+      - name: "GitLab"
+        logo: "assets/tools/gitlab.png"
+        url: "http://$HOSTIP:$GITLABPORT"
+
+  - name: ""
+    items:
+      - name: "Ollama LLM"
+        logo: "assets/tools/ollama.png"
+        url: "http://$HOSTIP:$OLLAMAPORT"
+
+      - name: "Ollama OCR"
+        logo: "assets/tools/ollama.png"
+        url: "http://$HOSTIP:$OCRPORT"
+
+      - name: "Draw.io"
+        logo: "assets/tools/draw-io.png"
+        url: "http://$HOSTIP:$DRAWIOPORT"
+
+      - name: "CyberChef"
+        logo: "assets/tools/cyberchef.png"
+        url: "http://$HOSTIP:$CCPORT"
+
+      - name: "Regex101"
+        logo: "assets/tools/dashboard-icons.png"
+        url: "http://$HOSTIP:$REGEXPORT"
+
+      - name: "IT-Tools"
+        logo: "assets/tools/it-tools.png"
+        url: "http://$HOSTIP:$ITTOOLSPORT"
+      
+      - name: "N8N"
+        logo: "assets/tools/n8n.png"
+        url: "http://$HOSTIP:$N8NPORT"
+
+  - name: ""
+    items:
+      - name: "codimd"
+        logo: "assets/tools/codimd.png"
+        url: "http://$HOSTIP:$CODIMDPORT"
+      
+      - name: "Etherpad"
+        logo: "assets/tools/etherpad.png"
+        url: "http://$HOSTIP:$ETHERPADPORT"
