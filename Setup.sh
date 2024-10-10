@@ -1,3 +1,4 @@
+# shellcheck disable=1017, 2215
 #!/bin/bash
 
 counter=2
@@ -38,6 +39,7 @@ ITTOOLSPORT=1010
 CODIMDPORT=1011
 ETHERPADPORT=1012
 N8NPORT=1013
+GITLABPORT=1014
 
 check_root_access() {
   set_color
@@ -83,7 +85,7 @@ check_system_resources() {
   
   mem_check
   echo
-  read -r -p "             You have CPU Cores: $core_count, RAM: $ram_size_gb GB. Continue [Y/n]? " answer
+  read -r -p "             You have CPU Cores: $CORES, RAM: $MEMORY MB. Continue [Y/n]? " answer
   case ${answer:0:1} in n|N ) echo; echo "Exiting."; exit ;; * ) ;; esac
 }
 
@@ -93,15 +95,15 @@ print_tools_to_install() {
   echo "                          TOOLS TO BE INSTALLED                                      "
   echo "--------------------------------------------------------------------------------------"
   echo
-  echo -e "\e[31mT\e[32mA\e[33mB\e[34mL\e[35mE\e[36m \e[31mO\e[32mF\e[33m \e[34mC\e[35mO\e[36mN\e[31mT\e[32mE\e[33mN\e[34mT\e[35mS\e[0m:"
-  echo -e "\e[31m-\e[32m-\e[33m-\e[34m-\e[35m-\e[36m-\e[31m-\e[32m-\e[33m-\e[34m-\e[35m-\e[36m-\e[31m-\e[32m-\e[33m-\e[34m-\e[35m-\e[36m-\e[0m"
-  echo "                     ------------------"
+  echo -e "\t\t\t\e[31mT\e[32mA\e[33mB\e[34mL\e[35mE\e[36m \e[31mO\e[32mF\e[33m \e[34mC\e[35mO\e[36mN\e[31mT\e[32mE\e[33mN\e[34mT\e[35mS\e[0m:"
+  echo -e "\t\t\e[32m-\e[33m-\e[34m-\e[35m-\e[36m-\e[32m-\e[33m-\e[34m-\e[35m-\e[36m-\e[31m-\e[32m-\e[33m-\e[34m-\e[35m-\e[36m-\e[31m-\e[32m-\e[33m-\e[34m-\e[35m-\e[36m-\e[31m-\e[32m-\e[33m-\e[34m-\e[35m-\e[36m-\e[31m-\e[32m-\e[33m-\e[34m-\e[35m-\e[36m-\e[0m"
+  echo -e "\t\t\e[32m-\e[33m-\e[34m-\e[35m-\e[36m-\e[32m-\e[33m-\e[34m-\e[35m-\e[36m-\e[31m-\e[32m-\e[33m-\e[34m-\e[35m-\e[36m-\e[31m-\e[32m-\e[33m-\e[34m-\e[35m-\e[36m-\e[31m-\e[32m-\e[33m-\e[34m-\e[35m-\e[36m-\e[31m-\e[32m-\e[33m-\e[34m-\e[35m-\e[36m-\e[0m"
   set_color
-  echo -e "\t Homer\t<-  $HOMERPORT ->\tDashboard"
+  echo -e "\t Homer\t\t<-  $HOMERPORT   ->\tDashboard"
   echo -e "\t Portainer\t<-  $PORTAINERPORT ->\tContainer Management"
   echo -e "\t VaultWarden\t<-  $VAULTPORT ->\tPassword Manager"
   echo -e "\t BookStack\t<-  $BOOKSTACKPORT ->\tDocumentation"
-  echo -e "\t Planka\t<-  $PLANKAPORT ->\tTasks Kanban Board"
+  echo -e "\t Planka\t\t<-  $PLANKAPORT ->\tTasks Kanban Board"
   echo -e "\t Paperless\t<-  $PAPERPORT ->\tDocument Management with OCR"
   echo -e "\t Ollama LLM\t<-  $OLLAMAPORT ->\tOffline LLM"
   echo -e "\t Ollama OCR\t<-  $OCRPORT ->\tOCR For Images to Text and/or Translation"
@@ -109,14 +111,15 @@ print_tools_to_install() {
   echo -e "\t CyberChef\t<-  $CYBERCHEFPORT ->\tCyberChef"
   echo -e "\t Regex101\t<-  $REGEX101PORT ->\tRegex Testing"
   echo -e "\t IT Tools\t<-  $ITTOOLSPORT ->\tVarious IT Tools"
-  echo -e "\t Codimd\t<-  $CODIMDPORT ->\tCollaborative Markdown Editor"
+  echo -e "\t Codimd\t\t<-  $CODIMDPORT ->\tCollaborative Markdown Editor"
   echo -e "\t Etherpad\t<-  $ETHERPADPORT ->\tCollaborative Document Editing"
-  echo -e "\t N8N\t<-  $N8NPORT ->\tWorkflow Automation"
+  echo -e "\t N8N\t\t<-  $N8NPORT ->\tWorkflow Automation"
+  echo -e "\t GitLab\t\t<-  $GITLABPORT ->\tOffline and OpenSource Git"
 }
 
 install_prerequisites() {
   echo "--------------------------------------------------------------------------------------"
-  echo "                          UPDATES AND PREREQUISITES SETUP                             "
+  echo "                      UPDATES AND PREREQUISITES SETUP"
   echo "--------------------------------------------------------------------------------------"
   set_color
   ## Set package manager based on the operating system
@@ -257,8 +260,9 @@ dashboard_SED() {
     s/\$ITTOOLSPORT/$ITTOOLSPORT/g; \
     s/\$CODIMDPORT/$CODIMDPORT/g; \
     s/\$ETHERPADPORT/$ETHERPADPORT/g; \
-    s/\$N8NPORT/$N8NPORT/g" "${DOCPATH}"/homer/config.yml \
-    "${DOCPATH}/homer/config.yml" #  > /dev/null 2>&1
+    s/\$GITLABPORT/$GITLABPORT/g; \
+    s/\$N8NPORT/$N8NPORT/g" \
+    "${DOCPATH}"/homer/config.yml #  > /dev/null 2>&1
 
 ## Dashboard-icons is a git repo that contains a lot of icons for the dashboard
 #  git clone https://github.com/walkxcode/dashboard-icons.git
@@ -271,8 +275,8 @@ network_creation() {
   echo "--------------------------------------------------------------------------------------"
   echo "                         Creating Network..."
   echo "--------------------------------------------------------------------------------------"
-  docker network create "${HALNETWORK}"
-  docker network create "${HALNETWORK}_DB"
+  docker network create "${HALPNETWORK}"
+  docker network create "${HALPNETWORK}_DB"
 }
 
 set_color && echo
@@ -284,85 +288,84 @@ create_bookstack_db() {
   set_color && echo
   echo -e "\t\tCreating MySQL - BookStack-DB"
   docker run -d \
-    --name BookStack-DB --hostname bookstack-db \
-    --restart ${DOCKERSTART} --network ${HALNETWORK} --network ${HALNETWORK}_DB \
-    -v "${DOCPATH}"/bookstack:/var/www/html/data \
-    -e MYSQL_DATABASE=bookstack -e MYSQL_ROOT_PASSWORD=${ACTPASSWORD} \
-    -e MYSQL_USER=bookstack -e MYSQL_PASSWORD=${ACTPASSWORD} \
-    mysql:8  #  > /dev/null 2>&1
+  --name BookStack-DB --hostname bookstack-db \
+  --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB \
+  -v "${DOCPATH}"/bookstack:/var/www/html/data \
+  -e MYSQL_DATABASE=bookstack -e MYSQL_ROOT_PASSWORD=${ACTPASSWORD} \
+  -e MYSQL_USER=bookstack -e MYSQL_PASSWORD=${ACTPASSWORD} \
+  mysql:8  #  > /dev/null 2>&1
 }
 
 create_planka_db() {
   set_color && echo
   echo -e "\t\tCreating PostGres - Planka-DB"
   docker run -d \
-    --name Planka-DB --hostname planka-db \
-    --restart ${DOCKERSTART} --network ${HALNETWORK} --network ${HALNETWORK}_DB \
-    -v "${DOCPATH}"/planka/db-data:/var/lib/postgresql/data:rw \
-    -e POSTGRES_DB=planka \
-    -e POSTGRES_HOST_AUTH_METHOD=trust \
-    postgres:14-alpine  #  > /dev/null 2>&1
+  --name Planka-DB --hostname planka-db \
+  --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB \
+  -v "${DOCPATH}"/planka/db-data:/var/lib/postgresql/data:rw \
+  -e POSTGRES_DB=planka \
+  -e POSTGRES_HOST_AUTH_METHOD=trust \
+  postgres:14-alpine  #  > /dev/null 2>&1
 }
 
 create_portainer() {
   set_color && echo
   echo -e "\t\tCreating Portainer"
   docker run -d \
-    --name Portainer --hostname portainer \
-    --restart ${DOCKERSTART} --network ${HALNETWORK} --network ${HALNETWORK}_DB \
-    -p 0.0.0.0:$PORTAINERPORT:9000 \
-    -v /var/run/docker.sock:/var/run/docker.sock \
-    portainer/portainer-ce:latest  #  > /dev/null 2>&1
+  --name Portainer --hostname portainer \
+  --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB \
+  -p 0.0.0.0:$PORTAINERPORT:9000 \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  portainer/portainer-ce:latest  #  > /dev/null 2>&1
 }
 
 create_homer() {
   echo -e "\t\tCreating Homer"
   docker run -d \
-    --name Homer \
-    --hostname homer \
-    --restart ${DOCKERSTART} --network ${HALNETWORK} \
-    -p $HOMERPORT:8080 \
-    -u 0:0 \
-    -v "${DOCPATH}"/homer:/www/assets:rw \
-    -v "${DOCPATH}"/homer/tools:/www/assets/tools:rw \
-    -e INIT_ASSETS=1 \
-    b4bz/homer:latest  #  > /dev/null 2>&1
+  --name Homer --hostname homer \
+  --restart ${DOCKERSTART} --network ${HALPNETWORK} \
+  -p $HOMERPORT:8080 \
+  -u 0:0 \
+  -v "${DOCPATH}"/homer:/www/assets:rw \
+  -v "${DOCPATH}"/homer/tools:/www/assets/tools:rw \
+  -e INIT_ASSETS=1 \
+  b4bz/homer:latest  #  > /dev/null 2>&1
 }
 
 install_planka() {
     echo -e "\t\tCreating Planka"
     docker run -d \
-        --name Planka --hostname planka \
-        --restart ${DOCKERSTART} --network ${HALNETWORK} --network ${HALNETWORK}_DB \
-        -p $PLANKAPORT:1337 \
-        -e BASE_URL=http://"$HOSTIP":$PLANKAPORT \
-        -e DATABASE_URL=postgresql://postgres@Planka-DB/planka \
-        -e SECRET_KEY=secretofkeys \
-        -e DEFAULT_ADMIN_EMAIL=${LOGINUSER}@planka.local \
-        -e DEFAULT_ADMIN_PASSWORD=${ACTPASSWORD} \
-        -e DEFAULT_ADMIN_NAME=Admin \
-        -e DEFAULT_ADMIN_USERNAME=admin \
-        -v "${DOCPATH}"/planka/user-avatars:/app/public/user-avatars \
-        -v "${DOCPATH}"/planka/project-background-images:/app/public/project-background-images \
-        -v "${DOCPATH}"/planka/attachments:/app/private/attachments \
-        ghcr.io/plankanban/planka:latest #  > /dev/null 2>&1
+      --name Planka --hostname planka \
+      --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB \
+      -p $PLANKAPORT:1337 \
+      -e BASE_URL=http://"$HOSTIP":$PLANKAPORT \
+      -e DATABASE_URL=postgresql://postgres@Planka-DB/planka \
+      -e SECRET_KEY=secretofkeys \
+      -e DEFAULT_ADMIN_EMAIL=${LOGINUSER}@planka.local \
+      -e DEFAULT_ADMIN_PASSWORD=${ACTPASSWORD} \
+      -e DEFAULT_ADMIN_NAME=Admin \
+      -e DEFAULT_ADMIN_USERNAME=admin \
+      -v "${DOCPATH}"/planka/user-avatars:/app/public/user-avatars \
+      -v "${DOCPATH}"/planka/project-background-images:/app/public/project-background-images \
+      -v "${DOCPATH}"/planka/attachments:/app/private/attachments \
+      ghcr.io/plankanban/planka:latest #  > /dev/null 2>&1
 }
 
 create_bookstack() {
   echo -e "\t\tCreating Bookstack"
   docker run -d \
-    --name BookStack --hostname bookstack \
-    --restart ${DOCKERSTART} --network ${HALNETWORK} --network ${HALNETWORK}_DB \
-    -p $BOOKSTACKPORT:80 \
-    -v "${DOCPATH}"/bookstack/config:'/config':rw \
-    -v "${DOCPATH}"/bookstack/public:/var/www/bookstack/public:rw \
-    -e PUID=1000 \
-    -e PGID=1000 \
-    -e DB_PORT=3306 \
-    -e APP_URL=http://"$HOSTIP":$BOOKSTACKPORT \
-    -e DB_HOST=BookStack-DB -e DB_DATABASE=bookstack \
-    -e DB_USERNAME=bookstack -e DB_PASSWORD=${ACTPASSWORD} \
-    linuxserver/bookstack  #  > /dev/null 2>&1
+  --name BookStack --hostname bookstack \
+  --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB \
+  -p $BOOKSTACKPORT:80 \
+  -v "${DOCPATH}"/bookstack/config:'/config':rw \
+  -v "${DOCPATH}"/bookstack/public:/var/www/bookstack/public:rw \
+  -e PUID=1000 \
+  -e PGID=1000 \
+  -e DB_PORT=3306 \
+  -e APP_URL=http://"$HOSTIP":$BOOKSTACKPORT \
+  -e DB_HOST=BookStack-DB -e DB_DATABASE=bookstack \
+  -e DB_USERNAME=bookstack -e DB_PASSWORD=${ACTPASSWORD} \
+  linuxserver/bookstack  #  > /dev/null 2>&1
 }
 
 echo "--------------------------------------------------------------------------------------"
@@ -379,25 +382,25 @@ install_vaultwarden() {
 
   echo -e "\t\tCreating VaultWarden"
   docker run -d \
-      --name VaultWarden --hostname vaultwarden \
-      --restart ${DOCKERSTART} \
-      -e SIGNUPS_ALLOWED=true \
-      -e INVITATIONS_ALLOWED=true \
-      -e DISABLE_ADMIN_TOKEN=false \
-      -e ADMIN_TOKEN='$argon2i$v=19$m=1024,t=1,p=2$em5qbXZ0OWtxQjcySHFINA$4ru65itAqedJVRs2C23JkQ' \
-      -e WEBSOCKET_ENABLED=false \
-      -p $VAULTPORT:80 \
-      -e ROCKET_TLS='{certs="/ssl/bitwarden.crt",key="/ssl/bitwarden.key"}' \
-      -v "${DOCPATH}"/vaultwarden/data:/data/:rw \
-      -v "${DOCPATH}"/vaultwarden/ssl:/ssl/:rw \
-      vaultwarden/server:latest #  > /dev/null 2>&1
+    --name VaultWarden --hostname vaultwarden \
+    --restart ${DOCKERSTART} \
+    -e SIGNUPS_ALLOWED=true \
+    -e INVITATIONS_ALLOWED=true \
+    -e DISABLE_ADMIN_TOKEN=false \
+    -e ADMIN_TOKEN='$argon2i$v=19$m=1024,t=1,p=2$em5qbXZ0OWtxQjcySHFINA$4ru65itAqedJVRs2C23JkQ' \
+    -e WEBSOCKET_ENABLED=false \
+    -p $VAULTPORT:80 \
+    -e ROCKET_TLS='{certs="/ssl/bitwarden.crt",key="/ssl/bitwarden.key"}' \
+    -v "${DOCPATH}"/vaultwarden/data:/data/:rw \
+    -v "${DOCPATH}"/vaultwarden/ssl:/ssl/:rw \
+    vaultwarden/server:latest #  > /dev/null 2>&1
 }
 
 install_paperless() {
     echo -e "\t\tCreating Paperless"
     docker run -d \
         --name Paperless --hostname paperless \
-        --restart ${DOCKERSTART} --network ${HALNETWORK} --network ${HALNETWORK}_DB \
+        --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB \
         -p $PAPERPORT:8000 \
         -v "${DOCPATH}"/paperless/data:/paperless/data \
         -v "${DOCPATH}"/paperless/media:/paperless/media \
@@ -405,13 +408,14 @@ install_paperless() {
         -e PAPERLESS_CONSUMPTION_DIR=/paperless/consumption \
         -e PAPERLESS_MEDIA_ROOT=/paperless/media \
         -e PAPERLESS_DATA_ROOT=/paperless/data
+        paperless-ng/paperless:latest #  > /dev/null 2>&1
 }
 
 install_ollama() {
     echo -e "\t\tCreating Ollama LLM"
     docker run -d \
         --name Ollama-LLM --hostname ollama-llm \
-        --restart ${DOCKERSTART} --network ${HALNETWORK} --network ${HALNETWORK}_DB \
+        --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB \
         -p 11434:11434 \
         -v "${DOCPATH}"/ollama:/root/.ollama \
         ollama/ollama
@@ -422,7 +426,7 @@ install_openwebui() {
     echo -e "\t\tCreating OpenWebUI"
     docker run -d \
         --name OpenWebUI --hostname openwebui \
-        --restart ${DOCKERSTART} --network ${HALNETWORK} --network ${HALNETWORK}_DB \
+        --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB \
         -p $OLLAMAPORT:8080 \
         --gpus=all -v ollama:/root/.ollama \
         -v open-webui:/app/backend/data \
@@ -433,7 +437,7 @@ install_webpage() {
   echo -e "\t\tCreating Ollama-OCR"
   docker run -d \
     --name Ollama-OCR --hostname ollama-ocr \
-    --restart ${DOCKERSTART} --network ${HALNETWORK} --network ${HALNETWORK}_DB \
+    --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB \
     -p $OCRPORT:80 \
     -v "${DOCPATH}"/OCR:/var/www/html:rw \
     python:3.9-slim bash -c "apt-get update && apt-get install -y apache2 && service apache2 start && tail -f /dev/null"
@@ -443,7 +447,7 @@ install_drawio() {
     echo -e "\t\tCreating Draw.io"
     docker run -d \
         --name Draw.io --hostname drawio \
-        --restart ${DOCKERSTART} --network ${HALNETWORK} --network ${HALNETWORK}_DB \
+        --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB \
         -p $DRAWIOPORT:8080 \
         jgraph/drawio:latest #  > /dev/null 2>&1
 }
@@ -452,8 +456,8 @@ install_cyberchef() {
     echo -e "\t\tCreating CyberChef"
     docker run -d \
         --name CyberChef --hostname cyberchef \
-        --restart ${DOCKERSTART} --network ${HALNETWORK} --network ${HALNETWORK}_DB \
-        -p $CCPORT:8000 \
+        --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB \
+        -p "$CYBERCHEFPORT":8000 \
         mpepping/cyberchef:latest #  > /dev/null 2>&1
 }
 
@@ -461,8 +465,8 @@ install_regex101() {
     echo -e "\t\tCreating Regex101"
     docker run -d \
         --name Regex101 --hostname regex101 \
-        --restart ${DOCKERSTART} --network ${HALNETWORK} --network ${HALNETWORK}_DB \
-        -p $REGEXPORT:9090 \
+        --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB \
+        -p "$REGEX101PORT":9090 \
         loopsun/regex101 #  > /dev/null 2>&1
 }
 
@@ -471,7 +475,7 @@ install_ittools() {
     echo -e "\t\tCreating IT Tools"
     docker run -d \
     --name IT-Tools --hostname it-tools \
-    --restart ${DOCKERSTART} --network ${HALNETWORK} --network ${HALNETWORK}_DB \
+    --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB \
     -p $ITTOOLSPORT:80 \
     corentinth/it-tools:latest
 }
@@ -484,7 +488,7 @@ install_codimd() {
     echo -e "\t\tCreating Codimd DB"
     docker run -d \
         --name Codimd-DB --hostname codimd-db \
-        --restart ${DOCKERSTART} --network ${HALNETWORK} --network ${HALNETWORK}_DB \
+        --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB \
         -v "${DOCPATH}"/codimd/db-data:/var/lib/postgresql/data:rw \
         -e POSTGRES_DB=codimd \
         -e POSTGRES_USER=codimd \
@@ -494,7 +498,7 @@ install_codimd() {
     echo -e "\t\tCreating Codimd"
     docker run -d \
         --name Codimd --hostname codimd \
-        --restart ${DOCKERSTART} --network ${HALNETWORK} --network ${HALNETWORK}_DB \
+        --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB \
         -p $CODIMDPORT:3000 \
         -e CMD_DB_URL=postgres://codimd:${ACTPASSWORD}@Codimd-DB/codimd \
         -e CMD_USECDN=false \
@@ -506,7 +510,7 @@ install_n8n() {
     echo -e "\t\tCreating N8N"
     docker run -d \
         --name N8N --hostname n8n \
-        --restart ${DOCKERSTART} --network ${HALNETWORK} --network ${HALNETWORK}_DB \
+        --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB \
         -p $N8NPORT:5678 \
         -e N8N_BASIC_AUTH_ACTIVE=true \
         -e N8N_SECURE_COOKIE=false \
@@ -520,8 +524,8 @@ install_gitlab() {
   echo -e "\t\tCreating GitLab"
   docker run -d \
     --name GitLab --hostname gitlab \
-    --restart ${DOCKERSTART} --network ${HALNETWORK} --network ${HALNETWORK}_DB \
-    -p $GITLABPORT:80 \
+    --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB \
+    -p "$GITLABPORT":80 \
     -v "${DOCPATH}"/gitlab/config:/etc/gitlab:rw \
     -v "${DOCPATH}"/gitlab/logs:/var/log/gitlab:rw \
     -v "${DOCPATH}"/gitlab/data:/var/opt/gitlab:rw \
@@ -599,6 +603,12 @@ create_planka_db
 create_homer              ## Installing Dashboard..."
 install_planka            ## Installing KanBan..."
 create_bookstack          ## Installing Wiki..."
+install_paperless         ## Installing Paperless..."
+install_ollama            ## Installing Ollama..."
+install_openwebui         ## Installing OpenWebUI..."
+install_webpage           ## Installing Ollama-OCR..."
+install_ittools           ## Installing IT Tools..."
+install_codimd            ## Installing Codimd..."
 
 install_n8n               ## Installing N8N..."
 install_gitlab            ## Installing GitLab..."

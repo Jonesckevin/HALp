@@ -59,7 +59,8 @@ services:
     items:
       - name: "VaultWarden"
         logo: "assets/tools/vaultwarden-light.png"
-        url: "http://$HOSTIP:$VAULTPORT"
+        url: "https://$HOSTIP:$VAULTPORT"
+        subtitle: "URI: /admin"
 
       - name: "Portainer"
         logo: "assets/tools/portainer.png"
