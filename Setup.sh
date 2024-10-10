@@ -19,27 +19,23 @@ DOCKERSTART=always
 HALPNETWORK="halp"
 DOCPATH=$(pwd)/zocker-data
 
-## Passwords
-MASSLOGINPASSWORD=password
-ADMIN_TOKEN='$argon2i$v=19$m=1024,t=1,p=2$em5qbXZ0OWtxQjcySHFINA$4ru65itAqedJVRs2C23JkQ'
-
 ## Ports
 HOMERPORT=80            # Homer
 VAULTPORT=1000          # Vaultwarden
-PORTAINERPORT=1001
-PLANKAPORT=1002
-BOOKSTACKPORT=1003
-PAPERPORT=1004
-OLLAMAPORT=1005
-OCRPORT=1006
-DRAWIOPORT=1007
-CYBERCHEFPORT=1008
-REGEX101PORT=1009
-ITTOOLSPORT=1010
-CODIMDPORT=1011
-ETHERPADPORT=1012
-N8NPORT=1013
-GITLABPORT=1014
+PORTAINERPORT=1001      # Portainer
+PLANKAPORT=1002         # Planka
+BOOKSTACKPORT=1003      # BookStack
+PAPERPORT=1004          # Paperless
+OLLAMAPORT=1005         # Ollama LLM
+OCRPORT=1006            # Ollama OCR
+DRAWIOPORT=1007         # Draw.io
+CYBERCHEFPORT=1008      # CyberChef
+REGEX101PORT=1009       # Regex101
+ITTOOLSPORT=1010        # IT Tools
+CODIMDPORT=1011         # Codimd
+ETHERPADPORT=1012       # Etherpad
+N8NPORT=1013            # N8N
+GITLABPORT=1014         # GitLab
 
 check_root_access() {
   set_color
@@ -379,7 +375,6 @@ install_vaultwarden() {
   openssl req -nodes -x509 -newkey rsa:4096 -keyout "${DOCPATH}"/vaultwarden/ssl/bitwarden.key -out "${DOCPATH}"/vaultwarden/ssl/bitwarden.crt -days 365 -subj "/C=CA/ST=Ontario/L=Ottawa/O=TF/CN=bitwarden.local"
 
   ls "${DOCPATH}"/vaultwarden/ssl/
-
   echo -e "\t\tCreating VaultWarden"
   docker run -d \
     --name VaultWarden --hostname vaultwarden \
