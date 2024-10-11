@@ -15,7 +15,7 @@ chmod -R 777 ./*
 HOSTIP=$(hostname -I | awk '{print $1}')
 LOGINUSER="admin"
 ACTPASSWORD="password"
-DOCKERSTART=always
+DOCKERSTART=unless-stopped
 HALPNETWORK="halp"
 DOCPATH=$(pwd)/zocker-data
 
@@ -286,11 +286,31 @@ create_bookstack_db() {
   docker run -d \
   --name BookStack-DB --hostname bookstack-db \
   --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB \
-  -v "${DOCPATH}"/bookstack:/var/www/html/data \
-  -e MYSQL_DATABASE=bookstack -e MYSQL_ROOT_PASSWORD=${ACTPASSWORD} \
-  -e MYSQL_USER=bookstack -e MYSQL_PASSWORD=${ACTPASSWORD} \
-  mysql:8  #  > /dev/null 2>&1
+  -e PUID=1000 -e PGID=1000 \
+  -e MYSQL_ROOT_PASSWORD=bookstackrootpassword \
+  -e TZ=America/Toronto \
+  -v "${DOCPATH}"/bookstack/db_data:/config \
+  -e MYSQL_DATABASE=bookstackapp \
+  -e MYSQL_USER=bookstack -e MYSQL_PASSWORD=bookstackpassword \
+  lscr.io/linuxserver/mariadb  #  > /dev/null 2>&1
 }
+create_bookstack() {
+  echo -e "\t\tCreating Bookstack"
+  docker run -d \
+  --name BookStack --hostname bookstack \
+  --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB \
+  -p $BOOKSTACKPORT:80 \
+  -v "${DOCPATH}"/bookstack/app_data:/config \
+  -v "${DOCPATH}"/bookstack/public:/var/www/bookstack/public:rw \
+  -e PUID=1000 \
+  -e PGID=1000 \
+  -e DB_PORT=3306 \
+  -e DB_HOST=BookStack-DB \
+  -e APP_URL=http://"$HOSTIP":$BOOKSTACKPORT \
+  -e DB_USER=bookstack -e DB_PASS=bookstackpassword -e DB_DATABASE=bookstackapp \
+  lscr.io/linuxserver/bookstack  #  > /dev/null 2>&1
+}
+ 
 
 create_planka_db() {
   set_color && echo
@@ -347,23 +367,6 @@ install_planka() {
       ghcr.io/plankanban/planka:latest #  > /dev/null 2>&1
 }
 
-create_bookstack() {
-  echo -e "\t\tCreating Bookstack"
-  docker run -d \
-  --name BookStack --hostname bookstack \
-  --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB \
-  -p $BOOKSTACKPORT:80 \
-  -v "${DOCPATH}"/bookstack/config:'/config':rw \
-  -v "${DOCPATH}"/bookstack/public:/var/www/bookstack/public:rw \
-  -e PUID=1000 \
-  -e PGID=1000 \
-  -e DB_PORT=3306 \
-  -e APP_URL=http://"$HOSTIP":$BOOKSTACKPORT \
-  -e DB_HOST=BookStack-DB -e DB_DATABASE=bookstack \
-  -e DB_USERNAME=bookstack -e DB_PASSWORD=${ACTPASSWORD} \
-  linuxserver/bookstack  #  > /dev/null 2>&1
-}
-
 echo "--------------------------------------------------------------------------------------"
 echo "                             Installing Additional Tools..."
 echo "--------------------------------------------------------------------------------------"
@@ -402,7 +405,7 @@ install_paperless() {
         -e PAPERLESS_OCR_LANGUAGES=eng \
         -e PAPERLESS_CONSUMPTION_DIR=/paperless/consumption \
         -e PAPERLESS_MEDIA_ROOT=/paperless/media \
-        -e PAPERLESS_DATA_ROOT=/paperless/data
+        -e PAPERLESS_DATA_ROOT=/paperless/data \
         paperless-ng/paperless:latest #  > /dev/null 2>&1
 }
 
@@ -423,7 +426,8 @@ install_openwebui() {
         --name OpenWebUI --hostname openwebui \
         --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB \
         -p $OLLAMAPORT:8080 \
-        --gpus=all -v ollama:/root/.ollama \
+        --gpu all \
+        -v ollama:/root/.ollama \
         -v open-webui:/app/backend/data \
         ghcr.io/open-webui/open-webui:ollama
 }
