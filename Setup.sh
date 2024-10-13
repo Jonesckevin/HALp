@@ -113,7 +113,7 @@ print_tools_to_install() {
   echo -e "\t GitLab\t\t<-  $GITLABPORT ->\tOffline and OpenSource Git"
 }
 
-install_prerequisites() {
+create_prerequisites() {
   echo "--------------------------------------------------------------------------------------"
   echo "                      UPDATES AND PREREQUISITES SETUP"
   echo "--------------------------------------------------------------------------------------"
@@ -218,6 +218,11 @@ folder_variables_check() {
   if [[ -d "${DOCPATH}" ]]; then
       read -r -p "The folder ""${DOCPATH}"" already exists. Do you want to delete all of it? [y/N]: " remove_folder
       if [[ $remove_folder =~ ^[Yy]$ ]]; then
+          echo -e "\e[31mWARNING: You are about to delete all pre-made data in ${DOCPATH}. Are you sure? [y/N]: \e[0m"
+          read -r confirm_delete
+          if [[ ! $confirm_delete =~ ^[Yy]$ ]]; then
+            echo "Aborting deletion."
+          fi
           echo "Removing ""${DOCPATH}""..."
           rm -d -r "${DOCPATH}"
           echo "Checking for ""${DOCPATH}""..."
@@ -348,7 +353,7 @@ create_homer() {
   b4bz/homer:latest  #  > /dev/null 2>&1
 }
 
-install_planka() {
+create_planka() {
     echo -e "\t\tCreating Planka"
     docker run -d \
       --name Planka --hostname planka \
@@ -372,7 +377,7 @@ echo "                             Installing Additional Tools..."
 echo "--------------------------------------------------------------------------------------"
 set_color && echo
 
-install_vaultwarden() {
+create_vaultwarden() {
   mkdir -p "${DOCPATH}"/vaultwarden/ssl
 
   openssl req -nodes -x509 -newkey rsa:4096 -keyout "${DOCPATH}"/vaultwarden/ssl/bitwarden.key -out "${DOCPATH}"/vaultwarden/ssl/bitwarden.crt -days 365 -subj "/C=CA/ST=Ontario/L=Ottawa/O=TF/CN=bitwarden.local"
@@ -394,9 +399,9 @@ install_vaultwarden() {
     vaultwarden/server:latest #  > /dev/null 2>&1
 }
 
-install_paperless() {
+create_paperless() {
     echo -e "\t\tCreating Paperless"
-    docker volume create paperless_{data, media, pgdata, redisdata}
+    #docker volume create paperless_{data, media, pgdata, redisdata}
     
     docker run -d \
         --name Paperless-Redis --hostname paperless-redis \
@@ -435,7 +440,7 @@ install_paperless() {
         #-e PAPERLESS_SECRET_KEY=change-me
 }
 
-install_ollama() {
+create_ollama() {
     echo -e "\t\tCreating Ollama LLM"
     docker run -d \
         --name Ollama-LLM --hostname ollama-llm \
@@ -445,7 +450,7 @@ install_ollama() {
         ollama/ollama
 }
 
-install_openwebui() {
+create_openwebui() {
     # https://github.com/open-webui/open-webui    
     echo -e "\t\tCreating OpenWebUI"
     docker run -d \
@@ -457,7 +462,7 @@ install_openwebui() {
         ghcr.io/open-webui/open-webui:main
 }
 
-install_webpage() {
+create_webpage() {
   echo -e "\t\tCreating Ollama-OCR"
   docker run -d \
     --name Ollama-OCR --hostname ollama-ocr \
@@ -467,7 +472,7 @@ install_webpage() {
     python:3.9-slim bash -c "apt-get update && apt-get install -y apache2 && service apache2 start && tail -f /dev/null"
 }
 
-install_drawio() {
+create_drawio() {
     echo -e "\t\tCreating Draw.io"
     docker run -d \
         --name Draw.io --hostname drawio \
@@ -476,7 +481,7 @@ install_drawio() {
         jgraph/drawio:latest #  > /dev/null 2>&1
 }
 
-install_cyberchef() {
+create_cyberchef() {
     echo -e "\t\tCreating CyberChef"
     docker run -d \
         --name CyberChef --hostname cyberchef \
@@ -485,7 +490,7 @@ install_cyberchef() {
         mpepping/cyberchef:latest #  > /dev/null 2>&1
 }
 
-install_regex101() {
+create_regex101() {
     echo -e "\t\tCreating Regex101"
     docker run -d \
         --name Regex101 --hostname regex101 \
@@ -494,7 +499,7 @@ install_regex101() {
         loopsun/regex101 #  > /dev/null 2>&1
 }
 
-install_ittools() {
+create_ittools() {
     # https://it-tools.tech/docker-run-to-docker-compose-converter
     echo -e "\t\tCreating IT Tools"
     docker run -d \
@@ -504,11 +509,8 @@ install_ittools() {
     corentinth/it-tools:latest
 }
 
-install_codimd() {
+create_codimd() {
     # https://hackmd.io/c/codimd-documentation/%2Fs%2Fcodimd-docker-deployment
-    docker volume create database-data
-    docker volume create upload-data
-    
     echo -e "\t\tCreating Codimd DB"
     docker run -d \
         --name Codimd-DB --hostname codimd-db \
@@ -530,7 +532,7 @@ install_codimd() {
         hackmdio/hackmd:2.5.4 #  > /dev/null 2>&1
 }
 
-install_n8n() {
+create_n8n() {
     echo -e "\t\tCreating N8N"
     docker run -d \
         --name N8N --hostname n8n \
@@ -544,7 +546,7 @@ install_n8n() {
         n8nio/n8n:latest #  > /dev/null 2>&1
 }
 
-install_gitlab() {
+create_gitlab() {
   echo -e "\t\tCreating GitLab"
   docker run -d \
     --name GitLab --hostname gitlab \
@@ -556,7 +558,7 @@ install_gitlab() {
     gitlab/gitlab-ce:latest #  > /dev/null 2>&1
 }
 
-install_etherpad() {
+create_etherpad() {
   echo -e "\t\tCreating Etherpad"
   docker run -d \
     --name EtherPad --hostname etherpad \
@@ -633,35 +635,32 @@ cpu_check
 mem_check
  
 print_tools_to_install     ## TOOLS TO BE INSTALLED
-install_prerequisites      ## UPDATES AND PREREQUISITES SETUP
+create_prerequisites      ## UPDATES AND PREREQUISITES SETUP
 folder_variables_check     ## Data Folder Creation
 network_creation           ## Creating Network...
-volume_creation            ## Creating Volumes...
 
 dashboard_SED
 
-create_portainer           ## Pulling / Creating Docker Containers for Databases...
-
-create_bookstack_db
-create_planka_db
-
-create_homer              ## Installing Dashboard...
-install_vaultwarden       ## Installing Vaultwarden...
-install_portainer         ## Installing Portainer...
-install_bookstack         ## Installing Wiki...
-install_planka            ## Installing KanBan...
-install_paperless         ## Installing Paperless...
-install_ollama            ## Installing Ollama...
-install_openwebui         ## Installing OpenWebUI...
-install_webpage           ## Installing Ollama-OCR...
-install_ittools           ## Installing IT Tools...
-install_codimd            ## Installing Codimd...
-install_n8n               ## Installing N8N...
-install_gitlab            ## Installing GitLab...
-install_drawio            ## Installing Drawio...
-install_cyberchef         ## Installing CyberChef...
-install_regex101          ## Installing Regex101...
-install_etherpad          ## Installing Etherpad...
+create_portainer         ## Creating Portainer...
+create_bookstack_db      ## Creating BookStack-DB...
+create_planka_db         ## Creating Planka-DB...
+create_homer             ## Installing Dashboard...
+create_vaultwarden       ## Installing Vaultwarden...
+create_portainer         ## Installing Portainer...
+create_bookstack         ## Installing Wiki...
+create_planka            ## Installing KanBan...
+create_paperless         ## Installing Paperless...
+create_ollama            ## Installing Ollama...
+create_openwebui         ## Installing OpenWebUI...
+create_webpage           ## Installing Ollama-OCR...
+create_ittools           ## Installing IT Tools...
+create_codimd            ## Installing Codimd...
+create_n8n               ## Installing N8N...
+create_gitlab            ## Installing GitLab...
+create_drawio            ## Installing Drawio...
+create_cyberchef         ## Installing CyberChef...
+create_regex101          ## Installing Regex101...
+create_etherpad          ## Installing Etherpad...
 
 fn_summary_cleanup && dockerpss # docker ps -a --format "table {{.ID}}\t{{.Names}}\t{{.Status}}\t{{.Ports}}" | tail -n +2 | sort -k 2
 
