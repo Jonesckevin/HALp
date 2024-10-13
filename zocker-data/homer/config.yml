@@ -82,6 +82,10 @@ services:
       - name: "GitLab"
         logo: "assets/tools/gitlab.png"
         url: "http://$HOSTIP:$GITLABPORT"
+      
+      - name: "N8N"
+        logo: "assets/tools/n8n.png"
+        url: "http://$HOSTIP:$N8NPORT"
 
   - name: ""
     items:
@@ -108,10 +112,6 @@ services:
       - name: "IT-Tools"
         logo: "assets/tools/it-tools.png"
         url: "http://$HOSTIP:$ITTOOLSPORT"
-      
-      - name: "N8N"
-        logo: "assets/tools/n8n.png"
-        url: "http://$HOSTIP:$N8NPORT"
 
   - name: ""
     items:

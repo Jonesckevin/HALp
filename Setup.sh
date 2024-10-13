@@ -25,7 +25,7 @@ VAULTPORT=1000          # Vaultwarden
 PORTAINERPORT=1001      # Portainer
 PLANKAPORT=1002         # Planka
 BOOKSTACKPORT=1003      # BookStack
-PAPERPORT=1004          # Paperless
+PAPERLESSPORT=1004          # Paperless
 OLLAMAPORT=1005         # Ollama LLM
 OCRPORT=1006            # Ollama OCR
 DRAWIOPORT=1007         # Draw.io
@@ -100,7 +100,7 @@ print_tools_to_install() {
   echo -e "\t VaultWarden\t<-  $VAULTPORT ->\tPassword Manager"
   echo -e "\t BookStack\t<-  $BOOKSTACKPORT ->\tDocumentation"
   echo -e "\t Planka\t\t<-  $PLANKAPORT ->\tTasks Kanban Board"
-  echo -e "\t Paperless\t<-  $PAPERPORT ->\tDocument Management with OCR"
+  echo -e "\t Paperless\t<-  $PAPERLESSPORT ->\tDocument Management with OCR"
   echo -e "\t Ollama LLM\t<-  $OLLAMAPORT ->\tOffline LLM"
   echo -e "\t Ollama OCR\t<-  $OCRPORT ->\tOCR For Images to Text and/or Translation"
   echo -e "\t Draw.io\t<-  $DRAWIOPORT ->\tDiagramming Tool"
@@ -247,7 +247,7 @@ dashboard_SED() {
     s/\$PORTAINERPORT/$PORTAINERPORT/g; \
     s/\$PLANKAPORT/$PLANKAPORT/g; \
     s/\$BOOKSTACKPORT/$BOOKSTACKPORT/g; \
-    s/\$PAPERPORT/$PAPERPORT/g; \
+    s/\$PAPERLESSPORT/$PAPERLESSPORT/g; \
     s/\$OLLAMAPORT/$OLLAMAPORT/g; \
     s/\$OCRPORT/$OCRPORT/g; \
     s/\$DRAWIOPORT/$DRAWIOPORT/g; \
@@ -396,17 +396,43 @@ install_vaultwarden() {
 
 install_paperless() {
     echo -e "\t\tCreating Paperless"
+    docker volume create paperless_{data, media, pgdata, redisdata}
+    
     docker run -d \
-        --name Paperless --hostname paperless \
+        --name Paperless-Redis --hostname paperless-redis \
         --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB \
-        -p $PAPERPORT:8000 \
-        -v "${DOCPATH}"/paperless/data:/paperless/data \
-        -v "${DOCPATH}"/paperless/media:/paperless/media \
-        -e PAPERLESS_OCR_LANGUAGES=eng \
-        -e PAPERLESS_CONSUMPTION_DIR=/paperless/consumption \
-        -e PAPERLESS_MEDIA_ROOT=/paperless/media \
-        -e PAPERLESS_DATA_ROOT=/paperless/data \
-        paperless-ng/paperless:latest #  > /dev/null 2>&1
+        -v "${DOCPATH}"/paperless/redisdata:/data \
+        docker.io/library/redis:7 #  > /dev/null 2>&1
+    
+    sleep 1
+    chmod -R 777 "${DOCPATH}"/paperless/redisdata
+
+    docker run -d \
+        --name Paperless-DB --hostname paperless-db \
+        --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB \
+        -v "${DOCPATH}"/paperless/pgdata:/var/lib/postgresql/data \
+        -e POSTGRES_DB=paperless \
+        -e POSTGRES_USER=paperless \
+        -e POSTGRES_PASSWORD=paperless \
+        docker.io/library/postgres:16 #  > /dev/null 2>&1
+    
+    docker run -d \
+        --name Paperless-NGX --hostname paperless-ngx \
+        --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB \
+        -p $PAPERLESSPORT:8000 \
+        -v "${DOCPATH}"/paperless/data:/usr/src/paperless/data \
+        -v "${DOCPATH}"/paperless/media:/usr/src/paperless/media \
+        -v "${DOCPATH}"/paperless/export:/usr/src/paperless/export \
+        -v "${DOCPATH}"/paperless/consume:/usr/src/paperless/consume \
+        -e PAPERLESS_REDIS=redis://Paperless-Redis:6379 \
+        -e PAPERLESS_DBHOST=Paperless-DB \
+        -e PAPERLESS_OCR_LANGUAGE=eng \
+        -e USERMAP_UID=1000 \
+        -e USERMAP_GID=1000 \
+        -e PAPERLESS_OCR_LANGUAGES=fra \
+        ghcr.io/paperless-ngx/paperless-ngx:latest #  > /dev/null 2>&1
+        #-e PAPERLESS_URL=https://paperless.example.com
+        #-e PAPERLESS_SECRET_KEY=change-me
 }
 
 install_ollama() {
@@ -426,10 +452,9 @@ install_openwebui() {
         --name OpenWebUI --hostname openwebui \
         --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB \
         -p $OLLAMAPORT:8080 \
-        --gpu all \
         -v ollama:/root/.ollama \
         -v open-webui:/app/backend/data \
-        ghcr.io/open-webui/open-webui:ollama
+        ghcr.io/open-webui/open-webui:main
 }
 
 install_webpage() {
@@ -531,6 +556,23 @@ install_gitlab() {
     gitlab/gitlab-ce:latest #  > /dev/null 2>&1
 }
 
+install_etherpad() {
+  echo -e "\t\tCreating Etherpad"
+  docker run -d \
+    --name EtherPad --hostname etherpad \
+    --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB \
+    --pids-limit 2048 \
+    -e TZ=America/New_York \
+    -e NODE_VERSION=22.8.0 \
+    -e YARN_VERSION=1.22.22 \
+    -e TIMEZONE= \
+    -e NODE_ENV=production \
+    -e ETHERPAD_PRODUCTION=1 \
+    -p "$ETHERPADPORT":9001 \
+    etherpad/etherpad
+}
+
+
 # Helps Load pages faster for file editing
 curl http://"$HOSTIP":$HOMERPORT > /dev/null 2>&1
 
@@ -541,10 +583,8 @@ fn_summary_cleanup() {
   echo -e "               docker ps -a --format \"table {{.ID}}\\t{{.Names}}\\t{{.Status}}\\t{{.Ports}}\" | tail -n +2 | sort -k 2"
   echo "   OR " dockerpss ""
   echo "-------------------------------------------------------------------------------------------------------------------------"
-  
-  alias dockerpss='sudo docker ps -a --format "table {{.ID}}\t{{.Names}}\t{{.Status}}\t{{.Ports}}" | tail -n +2 | sort -k 2'
-  echo -e "alias dockerpss='sudo docker ps -a --format \"table {{.ID}}\t{{.Names}}\t{{.Status}}\t{{.Ports}}\" | tail -n +2 | sort -k 2'" >> ~/.bashrc
-
+  echo 'alias dockerpss="sudo docker ps -a --format \"table {{.ID}}\t{{.Names}}\t{{.Status}}\t{{.Ports}}\" | tail -n +2 | sort -k 2"' >> ~/.bashrc
+  source ~/.bashrc
   echo "-------------------------------------------------------------------------------------------------------------------------"
   counter=5 && tput setaf $counter
 
@@ -566,14 +606,20 @@ default_logins_summary() {
 
   echo -e "\t\tBookStack Default Login:\tadmin@admin.com // ${ACTPASSWORD}"
   echo -e "\t\tPlanka Default Login:\t\tadmin@planka.local // ${ACTPASSWORD}"
+  echo
   echo -e "\t\tGitLab Default Can be set by using:"
   echo -e "\t\tGitLab Default Login at http://$HOSTIP:$GITLABPORT:\troot // <your inputed password>"
+  echo
   echo -e "\t\tdocker exec -it GitLab gitlab-rake "gitlab:password:reset[root]""
   echo -e " Here is an Example: ERqx&xK5xkN2GP2fsMYH"
+  echo
+  echo -e "\t\tPaperless default login at http://$HOSTIP:$PAPERLESSPORT. Create new user:"
+  echo -e "\t\tdocker exec -it Paperless-NGX "./manage.py createsuperuser""
   echo
   echo -e "\t\tVaultWarden Default Login:\tUse Password on http://$HOSTIP:$VAULTPORT/admin  // L7G\$DF8@@SA5SA*PAPVWK7SQUF\$N#J"
   echo
   echo -e "\t\tPortainer Default Login:\t<You can create your own>"
+  echo -e "\t\t You will however have to restart the docker if you wait to long"
   echo
   echo -e "\t\tN8N Default Login:\t\t${LOGINUSER} // ${ACTPASSWORD}"
   echo
@@ -599,23 +645,23 @@ create_portainer           ## Pulling / Creating Docker Containers for Databases
 create_bookstack_db
 create_planka_db
 
-create_homer              ## Installing Dashboard..."
-install_planka            ## Installing KanBan..."
-create_bookstack          ## Installing Wiki..."
-install_paperless         ## Installing Paperless..."
-install_ollama            ## Installing Ollama..."
-install_openwebui         ## Installing OpenWebUI..."
-install_webpage           ## Installing Ollama-OCR..."
-install_ittools           ## Installing IT Tools..."
-install_codimd            ## Installing Codimd..."
-
-install_n8n               ## Installing N8N..."
-install_gitlab            ## Installing GitLab..."
-
-install_vaultwarden       ## Installing Vaultwarden..."
-install_drawio            ## Installing Drawio..."
-install_cyberchef         ## Installing CyberChef..."
-install_regex101          ## Installing Regex101..."
+create_homer              ## Installing Dashboard...
+install_vaultwarden       ## Installing Vaultwarden...
+install_portainer         ## Installing Portainer...
+install_bookstack         ## Installing Wiki...
+install_planka            ## Installing KanBan...
+install_paperless         ## Installing Paperless...
+install_ollama            ## Installing Ollama...
+install_openwebui         ## Installing OpenWebUI...
+install_webpage           ## Installing Ollama-OCR...
+install_ittools           ## Installing IT Tools...
+install_codimd            ## Installing Codimd...
+install_n8n               ## Installing N8N...
+install_gitlab            ## Installing GitLab...
+install_drawio            ## Installing Drawio...
+install_cyberchef         ## Installing CyberChef...
+install_regex101          ## Installing Regex101...
+install_etherpad          ## Installing Etherpad...
 
 fn_summary_cleanup && dockerpss # docker ps -a --format "table {{.ID}}\t{{.Names}}\t{{.Status}}\t{{.Ports}}" | tail -n +2 | sort -k 2
 
@@ -624,3 +670,5 @@ default_logins_summary    # VISIT $HOSTIP:$HOMERPORT TO ACCESS HOMER
 chmod -R 777 "${DOCPATH}"
 
 echo "Profit"
+echo
+sudo docker ps -a --format "table {{.ID}}\t{{.Names}}\t{{.Status}}\t{{.Ports}}" | tail -n +2 | sort -k 2
