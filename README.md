@@ -60,19 +60,19 @@ docker ps --format "table \t{{.Names}}\t{{.Status}}\t{{.Ports}}"
 ## **Things you should do after running the script:**
 1. Navigate to your Dashboard and check each page for functionality
 2. Create Users/Passwords for each tool that doesn't get one by default. I reccomend using the included VaultWarden for password management. You'll forget...
-   1. Portainer - Navigate to URL: `http://<IP>:1001` and signup
-   2. Paperless - On the Host run the command: `docker exec -it Paperless-NGX "./manage.py createsuperuser"`
-   3. GitLab - On the Host run the command: `docker exec -it GitLab gitlab-rake "gitlab:password:reset[root]"`
-   4. N8N - Navigate to URL: `http://<IP>:1006`
-   5. Ollama LLM - Navigate to URL: `http://<IP>:1007` and signup
+   - Portainer - Navigate to URL: `http://<IP>:1001` and signup
+   - Paperless - On the Host run the command: `docker exec -it Paperless-NGX "./manage.py createsuperuser"`
+   - GitLab - On the Host run the command: `docker exec -it GitLab gitlab-rake "gitlab:password:reset[root]"`
+   - N8N - Navigate to URL: `http://<IP>:1006`
+   - Ollama LLM - Navigate to URL: `http://<IP>:1007` and signup
 3. Check if N8N is running. If not you may need to run `sudo chmod -R 777 /zocker-data/n8n` because the redis needs permissions. You can be more selective with the permissions if you want.
 4. Once signed up with Ollama LLM, you can go into the Admin Panel and Add the `aya:8b` model so that the OCR will work out of the box and any other models you want to use. I reccomend `llama3.2`
 5.  Download the Browser Extensions for VaultWarden
-    1.  Chrome: `chrome.google.com/webstore/detail/bitwarden-free-password-m/nngceckbapebfimnlniiiahkandclblb`
-    2.  Edge: `microsoftedge.microsoft.com/addons/detail/bitwarden-password-manage/jbkfoedolllekgbhcbcoahefnbanhhlh`
-    3.  Mozilla: `addons.mozilla.org/en-US/firefox/addon/bitwarden-password-manager/`
+    -  Chrome: `chrome.google.com/webstore/detail/bitwarden-free-password-m/nngceckbapebfimnlniiiahkandclblb`
+    -  Edge: `microsoftedge.microsoft.com/addons/detail/bitwarden-password-manage/jbkfoedolllekgbhcbcoahefnbanhhlh`
+    -  Mozilla: `addons.mozilla.org/en-US/firefox/addon/bitwarden-password-manager/`
 
 ## **Screenshots:**
-![Dashboard](/HALP/screenshot-examples/Example-Dashboard.png)
-![Portainer](/HALP/screenshot-examples/Example-Portainer.png)
-![OpenWebUI](/HALP/screenshot-examples/Example-OllamaWebUI.png)
+![Dashboard](./screenshot-examples/Example-Dashboard.png)
+![Portainer](./screenshot-examples/Example-Portainer.png)
+![OpenWebUI](./screenshot-examples/Example-OllamaWebUI.png)
