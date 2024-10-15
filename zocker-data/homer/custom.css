@@ -47,8 +47,8 @@ body h1 {
     color: var(--primary-color); /* Set color */
     text-shadow: var(--text-shadow); /* Set text shadow */
     font-size: 24px; /* Set font size */
-    padding: 1rem; /* Set padding */
-    font-size: 6rem; /* Set font size */
+    padding: 0rem; /* Set padding */
+    font-size: 4rem; /* Set font size */
 }
 
 /* Link styles */

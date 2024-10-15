@@ -65,11 +65,19 @@ services:
         logo: "assets/tools/portainer.png"
         url: "http://$HOSTIP:$PORTAINERPORT"
 
+      - name: "N8N"
+        logo: "assets/tools/n8n.png"
+        url: "http://$HOSTIP:$N8NPORT"
+
   - name: ""
     items:
       - name: "Planka"
         logo: "assets/tools/planka.png"
         url: "http://$HOSTIP:$PLANKAPORT"
+      
+      - name: "DFIR-IRIS"
+        logo: "assets/tools/dfir-iris.png"
+        url: "https://$HOSTIP:$DFIRIRISPORT"
 
       - name: "BookStack"
         logo: "assets/tools/bookstack.png"
@@ -82,10 +90,6 @@ services:
       - name: "GitLab"
         logo: "assets/tools/gitlab.png"
         url: "http://$HOSTIP:$GITLABPORT"
-      
-      - name: "N8N"
-        logo: "assets/tools/n8n.png"
-        url: "http://$HOSTIP:$N8NPORT"
 
   - name: ""
     items:
@@ -97,16 +101,12 @@ services:
         logo: "assets/tools/ollama.png"
         url: "http://$HOSTIP:$OCRPORT"
 
-      - name: "Draw.io"
-        logo: "assets/tools/draw.png"
-        url: "http://$HOSTIP:$DRAWIOPORT"
-
       - name: "CyberChef"
         logo: "assets/tools/cyberchef.png"
         url: "http://$HOSTIP:$CYBERCHEFPORT"
 
       - name: "Regex101"
-        logo: "assets/tools/dashboard-icons.png"
+        logo: "assets/tools/RegExr.png"
         url: "http://$HOSTIP:$REGEX101PORT"
 
       - name: "IT-Tools"
@@ -122,3 +122,7 @@ services:
       - name: "Etherpad"
         logo: "assets/tools/etherpad.png"
         url: "http://$HOSTIP:$ETHERPADPORT"
+
+      - name: "Draw.io"
+        logo: "assets/tools/draw.png"
+        url: "http://$HOSTIP:$DRAWIOPORT"
