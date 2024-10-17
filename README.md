@@ -19,7 +19,7 @@ create_new_tool
 
 
 ## **Usage**
-
+### Docker RUN
 You are not required to do the pre-requisites, but it is recommended specifically for docker install if you do not have it yet. Shouldn't hurt to say yes if you want to be sure. If it asks you to overwite anything, you can skip it.
 
 ```bash
@@ -32,7 +32,15 @@ sudo /bin/bash ./Setup.sh
 
 You can view a shorter docker ps with:
 ```bash
-docker ps --format "table \t{{.Names}}\t{{.Status}}\t{{.Ports}}"
+dockerps --format "table \t{{.Names}}\t{{.Status}}\t{{.Ports}}"
+```
+
+### Docker Compose
+```bash
+git clone https://github.com/Jonesckevin/HALP.git
+cd HALP
+vi .env
+docker-compose up -d
 ```
 
 ## **Tools**
