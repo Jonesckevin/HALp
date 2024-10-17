@@ -1,0 +1,263 @@
+---
+services:
+    bookstack-db:
+        image: lscr.io/linuxserver/mariadb
+        container_name: BookStack-DB
+        hostname: bookstack-db
+        restart: ${DOCKERSTART}
+        environment:
+            - PUID=1000
+            - PGID=1000
+            - MYSQL_ROOT_PASSWORD=bookstackrootpassword
+            - TZ=America/Toronto
+            - MYSQL_DATABASE=bookstackapp
+            - MYSQL_USER=bookstack
+            - MYSQL_PASSWORD=bookstackpassword
+        volumes:
+            - "${DOCPATH}/bookstack/db_data:/config"
+
+    bookstack:
+        image: lscr.io/linuxserver/bookstack:24.05.4
+        container_name: BookStack
+        hostname: bookstack
+        restart: ${DOCKERSTART}
+        ports:
+            - "$BOOKSTACKPORT:80"
+        volumes:
+            - "${DOCPATH}/bookstack/app_data:/config"
+            - "${DOCPATH}/bookstack/public:/var/www/bookstack/public:rw"
+        environment:
+            - PUID=1000
+            - PGID=1000
+            - DB_PORT=3306
+            - DB_HOST=BookStack-DB
+            - APP_URL=http://$HOSTIP:$BOOKSTACKPORT
+            - DB_USER=bookstack
+            - DB_PASS=bookstackpassword
+            - DB_DATABASE=bookstackapp
+
+    planka-db:
+        image: postgres:14-alpine
+        container_name: Planka-DB
+        hostname: planka-db
+        restart: ${DOCKERSTART}
+        volumes:
+            - "${DOCPATH}/planka/db-data:/var/lib/postgresql/data:rw"
+        environment:
+            - POSTGRES_DB=planka
+            - POSTGRES_HOST_AUTH_METHOD=trust
+
+    portainer:
+        image: portainer/portainer-ce:latest
+        container_name: Portainer
+        hostname: portainer
+        restart: ${DOCKERSTART}
+        ports:
+            - "0.0.0.0:$PORTAINERPORT:9000"
+        volumes:
+            - /var/run/docker.sock:/var/run/docker.sock
+
+    homer:
+        image: b4bz/homer:latest
+        container_name: Homer
+        hostname: homer
+        restart: ${DOCKERSTART}
+        ports:
+            - "$HOMERPORT:8080"
+        user: "0:0"
+        volumes:
+            - "${DOCPATH}/homer:/www/assets:rw"
+            - "${DOCPATH}/homer/tools:/www/assets/tools:rw"
+        environment:
+            - INIT_ASSETS=1
+
+    planka:
+        image: ghcr.io/plankanban/planka:latest
+        container_name: Planka
+        hostname: planka
+        restart: ${DOCKERSTART}
+        ports:
+            - "$PLANKAPORT:1337"
+        environment:
+            - BASE_URL=http://$HOSTIP:$PLANKAPORT
+            - DATABASE_URL=postgresql://postgres@Planka-DB/planka
+            - SECRET_KEY=secretofkeys
+            - DEFAULT_ADMIN_EMAIL=${LOGINUSER}@planka.local
+            - DEFAULT_ADMIN_PASSWORD=${ACTPASSWORD}
+            - DEFAULT_ADMIN_NAME=Admin
+            - DEFAULT_ADMIN_USERNAME=admin
+        volumes:
+            - "${DOCPATH}/planka/user-avatars:/app/public/user-avatars"
+            - "${DOCPATH}/planka/project-background-images:/app/public/project-background-images"
+            - "${DOCPATH}/planka/attachments:/app/private/attachments"
+
+    paperless-redis:
+        image: docker.io/library/redis:7
+        container_name: Paperless-Redis
+        hostname: paperless-redis
+        restart: ${DOCKERSTART}
+        volumes:
+            - "${DOCPATH}/paperless/redisdata:/data"
+
+    paperless-db:
+        image: docker.io/library/postgres:16
+        container_name: Paperless-DB
+        hostname: paperless-db
+        restart: ${DOCKERSTART}
+        volumes:
+            - "${DOCPATH}/paperless/pgdata:/var/lib/postgresql/data"
+        environment:
+            - POSTGRES_DB=paperless
+            - POSTGRES_USER=paperless
+            - POSTGRES_PASSWORD=paperless
+
+    paperless-ngx:
+        image: ghcr.io/paperless-ngx/paperless-ngx:latest
+        container_name: Paperless-NGX
+        hostname: paperless-ngx
+        restart: ${DOCKERSTART}
+        ports:
+            - "$PAPERLESSPORT:8000"
+        volumes:
+            - "${DOCPATH}/paperless/data:/usr/src/paperless/data"
+            - "${DOCPATH}/paperless/media:/usr/src/paperless/media"
+            - "${DOCPATH}/paperless/export:/usr/src/paperless/export"
+            - "${DOCPATH}/paperless/consume:/usr/src/paperless/consume"
+        environment:
+            - PAPERLESS_REDIS=redis://Paperless-Redis:6379
+            - PAPERLESS_DBHOST=Paperless-DB
+            - PAPERLESS_OCR_LANGUAGE=eng
+            - USERMAP_UID=1000
+            - USERMAP_GID=1000
+            - PAPERLESS_OCR_LANGUAGES=fra
+
+    ollama-llm:
+        image: ollama/ollama
+        container_name: Ollama-LLM
+        hostname: ollama-llm
+        restart: ${DOCKERSTART}
+        ports:
+            - "11434:11434"
+        volumes:
+            - "${DOCPATH}/ollama:/root/.ollama"
+
+    openwebui:
+        image: ghcr.io/open-webui/open-webui:main
+        container_name: OpenWebUI
+        hostname: openwebui
+        restart: ${DOCKERSTART}
+        ports:
+            - "$OLLAMAPORT:8080"
+        environment:
+            - OLLAMA_BASE_URL=http://$HOSTIP:11434
+        volumes:
+            - ${DOCPATH}/ollama:/root/.ollama
+            - ${DOCPATH}/open-webui:/app/backend/data
+
+    ollama-ocr:
+        build: ./zocker-data/OCR/
+        container_name: Ollama-OCR
+        hostname: ollama-ocr
+        restart: ${DOCKERSTART}
+        ports:
+            - "$OCRPORT:5000"
+        volumes:
+            - "${DOCPATH}/zocker-data/OCR:/var/www/html:rw"
+
+    drawio:
+        image: jgraph/drawio:latest
+        container_name: Draw.io
+        hostname: drawio
+        restart: ${DOCKERSTART}
+        ports:
+            - "$DRAWIOPORT:8080"
+
+    cyberchef:
+        image: mpepping/cyberchef:latest
+        container_name: CyberChef
+        hostname: cyberchef
+        restart: ${DOCKERSTART}
+        ports:
+            - "$CYBERCHEFPORT:8000"
+
+    regex101:
+        image: loopsun/regex101
+        container_name: Regex101
+        hostname: regex101
+        restart: ${DOCKERSTART}
+        ports:
+            - "$REGEX101PORT:9090"
+
+    it-tools:
+        image: corentinth/it-tools:latest
+        container_name: IT-Tools
+        hostname: it-tools
+        restart: ${DOCKERSTART}
+        ports:
+            - "$ITTOOLSPORT:80"
+
+    codimd-db:
+        image: postgres:14-alpine
+        container_name: Codimd-DB
+        hostname: codimd-db
+        restart: ${DOCKERSTART}
+        volumes:
+            - "${DOCPATH}/codimd/db-data:/var/lib/postgresql/data:rw"
+        environment:
+            - POSTGRES_DB=codimd
+            - POSTGRES_USER=codimd
+            - POSTGRES_PASSWORD=${ACTPASSWORD}
+
+    codimd:
+        image: hackmdio/hackmd:2.5.4
+        container_name: Codimd
+        hostname: codimd
+        restart: ${DOCKERSTART}
+        ports:
+            - "$CODIMDPORT:3000"
+        environment:
+            - CMD_DB_URL=postgres://codimd:${ACTPASSWORD}@Codimd-DB/codimd
+            - CMD_USECDN=false
+        volumes:
+            - "${DOCPATH}/codimd/uploads:/home/hackmd/app/public/uploads"
+
+    n8n:
+        image: n8nio/n8n:latest
+        container_name: N8N
+        hostname: n8n
+        restart: ${DOCKERSTART}
+        ports:
+            - "$N8NPORT:5678"
+        environment:
+            - N8N_BASIC_AUTH_ACTIVE=true
+            - N8N_SECURE_COOKIE=false
+            - N8N_BASIC_AUTH_USER=${LOGINUSER}@n8n.local
+            - N8N_BASIC_AUTH_PASSWORD=${ACTPASSWORD}
+        volumes:
+            - "${DOCPATH}/n8n:/home/node/.n8n"
+
+    gitlab:
+        image: gitlab/gitlab-ce:latest
+        container_name: GitLab
+        hostname: gitlab
+        restart: ${DOCKERSTART}
+        ports:
+            - "$GITLABPORT:80"
+        volumes:
+            - "${DOCPATH}/gitlab/config:/etc/gitlab:rw"
+            - "${DOCPATH}/gitlab/logs:/var/log/gitlab:rw"
+            - "${DOCPATH}/gitlab/data:/var/opt/gitlab:rw"
+
+    etherpad:
+        image: etherpad/etherpad
+        container_name: EtherPad
+        hostname: etherpad
+        restart: ${DOCKERSTART}
+        ports:
+            - "$ETHERPADPORT:9001"
+        environment:
+            - TZ=America/New_York
+            - NODE_VERSION=22.8.0
+            - YARN_VERSION=1.22.22
+            - NODE_ENV=production
+            - ETHERPAD_PRODUCTION=1
