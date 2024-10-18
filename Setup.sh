@@ -1,6 +1,5 @@
-# shellcheck disable=1017, 2215
 #!/bin/bash
- 
+
 create_docker_commands() {
   # Create executables for stopping and removing Docker containers
   echo '#!/bin/bash' | sudo tee /usr/local/bin/dockerstop
@@ -72,6 +71,7 @@ CODIMDPORT=1012         # Codimd
 ETHERPADPORT=1013       # Etherpad
 N8NPORT=1014            # N8N
 GITLABPORT=1015         # GitLab
+BBSHUFFLEPORT=1016          # B-B-Shuffle
 
 check_root_access() {
   set_color
@@ -148,6 +148,7 @@ print_tools_to_install() {
   echo -e "\t Etherpad\t<-  $ETHERPADPORT ->\tCollaborative Document Editing"
   echo -e "\t N8N\t\t<-  $N8NPORT ->\tWorkflow Automation"
   echo -e "\t GitLab\t\t<-  $GITLABPORT ->\tOffline and OpenSource Git"
+  echo -e "\t B-B-Shuffle\t<-  $BBSHUFFLEPORT ->\tB-B-Shuffle"
 }
 
 create_prerequisites() {
@@ -258,7 +259,7 @@ dashboard_SED() {
   echo "                         Editing Dashboard Configuration Files..."
   echo "--------------------------------------------------------------------------------------"
   echo "                 Fixing in the Homer Config via SED..."
-  sed -i "s/\$HOSTIP/$HOSTIP/g; s/\$HOMERPORT/$HOMERPORT/g; s/\$VAULTPORT/$VAULTPORT/g; s/\$PORTAINERPORT/$PORTAINERPORT/g; s/\$PLANKAPORT/$PLANKAPORT/g; s/\$BOOKSTACKPORT/$BOOKSTACKPORT/g; s/\$PAPERLESSPORT/$PAPERLESSPORT/g; s/\$OLLAMAPORT/$OLLAMAPORT/g; s/\$OCRPORT/$OCRPORT/g; s/\$DRAWIOPORT/$DRAWIOPORT/g; s/\$CYBERCHEFPORT/$CYBERCHEFPORT/g; s/\$REGEX101PORT/$REGEX101PORT/g; s/\$ITTOOLSPORT/$ITTOOLSPORT/g; s/\$CODIMDPORT/$CODIMDPORT/g; s/\$ETHERPADPORT/$ETHERPADPORT/g; s/\$GITLABPORT/$GITLABPORT/g; s/\$N8NPORT/$N8NPORT/g; s/\$DFIRIRISPORT/$DFIRIRISPORT/g" "${DOCPATH}"/homer/config.yml
+  sed -i "s/\$HOSTIP/$HOSTIP/g; s/\$HOMERPORT/$HOMERPORT/g; s/\$VAULTPORT/$VAULTPORT/g; s/\$PORTAINERPORT/$PORTAINERPORT/g; s/\$PLANKAPORT/$PLANKAPORT/g; s/\$BOOKSTACKPORT/$BOOKSTACKPORT/g; s/\$PAPERLESSPORT/$PAPERLESSPORT/g; s/\$OLLAMAPORT/$OLLAMAPORT/g; s/\$OCRPORT/$OCRPORT/g; s/\$DRAWIOPORT/$DRAWIOPORT/g; s/\$CYBERCHEFPORT/$CYBERCHEFPORT/g; s/\$REGEX101PORT/$REGEX101PORT/g; s/\$ITTOOLSPORT/$ITTOOLSPORT/g; s/\$CODIMDPORT/$CODIMDPORT/g; s/\$ETHERPADPORT/$ETHERPADPORT/g; s/\$GITLABPORT/$GITLABPORT/g; s/\$N8NPORT/$N8NPORT/g; s/\$DFIRIRISPORT/$DFIRIRISPORT/g; s/\$BBSHUFFLEPORT/$BBSHUFFLEPORT/g" "${DOCPATH}"/homer/config.yml
 
 ## Dashboard-icons is a git repo that contains a lot of icons for the dashboard
 #  git clone https://github.com/walkxcode/dashboard-icons.git
@@ -426,6 +427,16 @@ create_etherpad() {
   docker run -d --name EtherPad --hostname etherpad --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB --pids-limit 2048 -e TZ=America/New_York -e NODE_VERSION=22.8.0 -e YARN_VERSION=1.22.22 -e TIMEZONE= -e NODE_ENV=production -e ETHERPAD_PRODUCTION=1 -p "$ETHERPADPORT":9001 etherpad/etherpad
 }
 
+create_b_b_shuffle() {
+  set_color && echo
+  echo -e "\t\tCreating B-B-Shuffle"
+  ## If you want to change the background image, you can replace the Orange-Background.png with your own image
+  #cp Images/Orange-Background.png "${DOCPATH}"/B-B-Shuffle/App/img/page-back.png
+  git clone https://github.com/p3hndrx/B-B-Shuffle.git "${DOCPATH}"/B-B-Shuffle
+  docker build -t b-b-shuffle ./zocker-data/B-B-Shuffle/
+  docker run -d --name B-B-Shuffle --hostname b-b-shuffle --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p "${BBSHUFFLEPORT}":80 -v "${DOCPATH}"/B-B-Shuffle:/var/www/html:rw b-b-shuffle
+}
+
 create_sift_remnux() {
   # Prompt the user if they want to build, pull the image from docker-hub, or skip
   set_color && echo
@@ -438,7 +449,7 @@ create_sift_remnux() {
     docker build -t sift-remnux -f ./zocker-data/siftnux-docker/Dockerfile   ./zocker-data/siftnux-docker
 
     # Run the container
-    docker run -d --name SIFT-REMnux --hostname sift-remnux --restart ${DOCKERSTART} -p 33:22 -v "${DOCPATH}"/zocker-data/sift-remnux:/root   sift-remnux
+    docker run -d --name SIFT-REMnux --hostname sift-remnux --restart ${DOCKERSTART} -p 33:22 -v "${DOCPATH}"/zocker-data/sift-remnux:/root sift-remnux
 
   elif [[ $build_pull_skip =~ ^[Pp]$ ]]; then
     # Pull the image
@@ -446,7 +457,7 @@ create_sift_remnux() {
     docker pull digitalsleuth/sift-remnux:latest
 
     # Run the container
-    docker run -d --name SIFT-REMnux --hostname sift-remnux --restart ${DOCKERSTART} -p 33:22 -v "${DOCPATH}"/zocker-data/sift-remnux:/root   digitalsleuth/sift-remnux:latest
+    docker run -d --name SIFT-REMnux --hostname sift-remnux --restart ${DOCKERSTART} -p 33:22 -v "${DOCPATH}"/zocker-data/sift-remnux:/root digitalsleuth/sift-remnux:latest
 
   else
     echo "Skipping SIFT-REMnux setup."
@@ -577,6 +588,7 @@ create_drawio            ## Installing Drawio...
 create_cyberchef         ## Installing CyberChef...
 create_regex101          ## Installing Regex101...
 create_etherpad          ## Installing Etherpad...
+create_b_b_shuffle       ## Installing B-B-Shuffle...
 #create_sift_remnux       ## Installing SIFT-REMnux...
 
 postcreation_changes() {
@@ -603,6 +615,7 @@ fn_summary_cleanup && dockerpss # docker ps -a --format "table {{.ID}}\t{{.Names
 default_logins_summary   ## VISIT $HOSTIP:$HOMERPORT TO ACCESS HOMER
 
 #install_backup           ## Creating Backup Cron Job and Running Backup
+
 set_color && echo
 echo "--------------------------------------------------------------------------------------"
 echo "                             Installation Complete"

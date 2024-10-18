@@ -46,6 +46,9 @@ links:
   - name: "SecondPage!"
     icon: "fas fa-copy"
     url: "#SoP_Pages"
+  - name: "B-B-Shuffle"
+    icon: "fas fa-dice"
+    url: "http://$HOSTIP:$BBSHUFFLEPORT"
 services:
   - name: ""
     items:
@@ -55,7 +58,7 @@ services:
         subtitle: ""
         tag: ""
         keywords: ""
-
+      
       - name: "VaultWarden"
         logo: "assets/tools/vaultwarden-light.png"
         url: "https://$HOSTIP:$VAULTPORT"
@@ -126,3 +129,9 @@ services:
       - name: "Draw.io"
         logo: "assets/tools/draw.png"
         url: "http://$HOSTIP:$DRAWIOPORT"
+
+  - name: "Cyber Tabletop"
+    items:
+      - name: "B-B-Shuffle"
+        logo: "assets/tools/b-b-shuffle.png"
+        url: "http://$HOSTIP:$BBSHUFFLEPORT"
