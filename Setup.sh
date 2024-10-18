@@ -370,7 +370,7 @@ create_openwebui() {
 create_webpage() {
   set_color && echo
   docker build -t ocr-tool ./zocker-data/OCR/
-  docker run -d --name Ollama-OCR --hostname ollama-ocr --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -v "${DOCPATH}"/zocker-data/OCR:/var/www/html:rw -p $OCRPORT:5000 ocr-tool
+  docker run -d --name Ollama-OCR --hostname ollama-ocr --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -v "${DOCPATH}"/zocker-data/OCR/html:/var/www/html:rw -p $OCRPORT:5000 ocr-tool
 }
 
 create_drawio() {
@@ -434,7 +434,7 @@ create_b_b_shuffle() {
   #cp Images/Orange-Background.png "${DOCPATH}"/B-B-Shuffle/App/img/page-back.png
   git clone https://github.com/p3hndrx/B-B-Shuffle.git "${DOCPATH}"/B-B-Shuffle
   docker build -t b-b-shuffle ./zocker-data/B-B-Shuffle/
-  docker run -d --name B-B-Shuffle --hostname b-b-shuffle --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p "${BBSHUFFLEPORT}":80 -v "${DOCPATH}"/B-B-Shuffle:/var/www/html:rw b-b-shuffle
+  docker run -d --name B-B-Shuffle --hostname b-b-shuffle --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p "${BBSHUFFLEPORT}":80 -v "${DOCPATH}"/B-B-Shuffle/html:/var/www/html:rw b-b-shuffle
 }
 
 create_sift_remnux() {

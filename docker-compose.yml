@@ -162,7 +162,7 @@ services:
         ports:
             - "$OCRPORT:5000"
         volumes:
-            - "${DOCPATH}/zocker-data/OCR:/var/www/html:rw"
+            - "${DOCPATH}/zocker-data/OCR/html:/var/www/html:rw"
 
     drawio:
         image: jgraph/drawio:latest
@@ -261,3 +261,13 @@ services:
             - YARN_VERSION=1.22.22
             - NODE_ENV=production
             - ETHERPAD_PRODUCTION=1
+
+    b-b-shuffle:
+        build: ./zocker-data/B-B-Shuffle/
+        container_name: B-B-Shuffle
+        hostname: b-b-shuffle
+        restart: ${DOCKERSTART}
+        ports:
+            - "$BBSHUFFLEPORT:80"
+        volumes:
+            - "${DOCPATH}/zocker-data/B-B-Shuffle/html:/var/www/html:rw"
