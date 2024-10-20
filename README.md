@@ -65,6 +65,7 @@ docker-compose up -d
 | <img src="./zocker-data/homer/tools/n8n.png" width="15" height="15"> | **n8n**             | Workflow Automation               | 1014 |
 | <img src="./zocker-data/homer/tools/gitlab.png" width="15" height="15"> | **GitLab**          | Git Repository Management         | 1015 |
 | <img src="./zocker-data/homer/tools/b-b-shuffle.png" width="15" height="15"> | **B-B-Shuffle**     | Cyber Card Game                   | 1016 |
+| <img src="./zocker-data/homer/tools/vscode.png" width="15" height="15"> | **VSCode**          | Code Editor                       | 1017 |
 | <img src="./zocker-data/homer/tools/SiftNux.png" width="15" height="15"> | **SiftNux Linux 20.04** | Forensics SSH | 33 |
 
 

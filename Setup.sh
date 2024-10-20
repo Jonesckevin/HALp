@@ -71,7 +71,8 @@ CODIMDPORT=1012         # Codimd
 ETHERPADPORT=1013       # Etherpad
 N8NPORT=1014            # N8N
 GITLABPORT=1015         # GitLab
-BBSHUFFLEPORT=1016          # B-B-Shuffle
+BBSHUFFLEPORT=1016      # B-B-Shuffle
+VSCODEPORT=1017             # VSCode
 
 check_root_access() {
   set_color
@@ -148,8 +149,8 @@ print_tools_to_install() {
   echo -e "\t Etherpad\t<-  $ETHERPADPORT ->\tCollaborative Document Editing"
   echo -e "\t N8N\t\t<-  $N8NPORT ->\tWorkflow Automation"
   echo -e "\t GitLab\t\t<-  $GITLABPORT ->\tOffline and OpenSource Git"
-  echo -e "\t B-B-Shuffle\t<-  $BBSHUFFLEPORT ->\tB-B-Shuffle"
-}
+  echo -e "\t B-B-Shuffle\t<-  $BBSHUFFLEPORT ->\tB-B-Shuffle"\
+  echo -e "\t VSCode\t\t<-  $VSCODEPORT ->\tVSCode"
 
 create_prerequisites() {
   echo "--------------------------------------------------------------------------------------"
@@ -259,7 +260,7 @@ dashboard_SED() {
   echo "                         Editing Dashboard Configuration Files..."
   echo "--------------------------------------------------------------------------------------"
   echo "                 Fixing in the Homer Config via SED..."
-  sed -i "s/\$HOSTIP/$HOSTIP/g; s/\$HOMERPORT/$HOMERPORT/g; s/\$VAULTPORT/$VAULTPORT/g; s/\$PORTAINERPORT/$PORTAINERPORT/g; s/\$PLANKAPORT/$PLANKAPORT/g; s/\$BOOKSTACKPORT/$BOOKSTACKPORT/g; s/\$PAPERLESSPORT/$PAPERLESSPORT/g; s/\$OLLAMAPORT/$OLLAMAPORT/g; s/\$OCRPORT/$OCRPORT/g; s/\$DRAWIOPORT/$DRAWIOPORT/g; s/\$CYBERCHEFPORT/$CYBERCHEFPORT/g; s/\$REGEX101PORT/$REGEX101PORT/g; s/\$ITTOOLSPORT/$ITTOOLSPORT/g; s/\$CODIMDPORT/$CODIMDPORT/g; s/\$ETHERPADPORT/$ETHERPADPORT/g; s/\$GITLABPORT/$GITLABPORT/g; s/\$N8NPORT/$N8NPORT/g; s/\$DFIRIRISPORT/$DFIRIRISPORT/g; s/\$BBSHUFFLEPORT/$BBSHUFFLEPORT/g" "${DOCPATH}"/homer/config.yml
+  sed -i "s/\$HOSTIP/$HOSTIP/g; s/\$HOMERPORT/$HOMERPORT/g; s/\$VAULTPORT/$VAULTPORT/g; s/\$PORTAINERPORT/$PORTAINERPORT/g; s/\$PLANKAPORT/$PLANKAPORT/g; s/\$BOOKSTACKPORT/$BOOKSTACKPORT/g; s/\$PAPERLESSPORT/$PAPERLESSPORT/g; s/\$OLLAMAPORT/$OLLAMAPORT/g; s/\$OCRPORT/$OCRPORT/g; s/\$DRAWIOPORT/$DRAWIOPORT/g; s/\$CYBERCHEFPORT/$CYBERCHEFPORT/g; s/\$REGEX101PORT/$REGEX101PORT/g; s/\$ITTOOLSPORT/$ITTOOLSPORT/g; s/\$CODIMDPORT/$CODIMDPORT/g; s/\$ETHERPADPORT/$ETHERPADPORT/g; s/\$GITLABPORT/$GITLABPORT/g; s/\$N8NPORT/$N8NPORT/g; s/\$DFIRIRISPORT/$DFIRIRISPORT/g; s/\$BBSHUFFLEPORT/$BBSHUFFLEPORT/g; s/\$VSCODEPORT/$VSCODEPORT/g" "${DOCPATH}"/homer/config.yml
 
 ## Dashboard-icons is a git repo that contains a lot of icons for the dashboard
 #  git clone https://github.com/walkxcode/dashboard-icons.git
@@ -464,6 +465,29 @@ create_sift_remnux() {
   fi
 }
 
+create_vscode() {
+  set_color && echo
+  echo -e "\t\tCreating VSCode"
+  docker run -d --name VSCode --hostname vscode --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p $VSCODEPORT:8443 -e PUID=1000 -e PGID=1000 -e TZ=Etc/UTC -e PASSWORD=${ACTPASSWORD} -e HASHED_PASSWORD= -e SUDO_PASSWORD=${ACTPASSWORD} -e SUDO_PASSWORD_HASH= -e DEFAULT_WORKSPACE=/config/workspace -v ${DOCPATH}/vscode:/config lscr.io/linuxserver/code-server:latest
+
+  # Install extensions
+  echo "Installing VSCode Extensions..."
+  docker exec -it VSCode "code-server --install-extension \
+    esbenp.prettier-vscode \
+    ms-python.debugpy \
+    redhat.vscode-yaml \
+    redhat.vscode-xml \
+    gitlab.gitlab-workflow \
+    vscode-icons-team.vscode-icons \ 
+    yzhang.markdown-all-in-one \
+    mechatroner.rainbow-csv \
+    oderwat.indent-rainbow \
+    shd101wyy.markdown-preview-enhanced \
+    grapecity.gc-excelviewer \
+    bierner.markdown-mermaid \
+    bpruitt-goddard.mermaid-markdown-syntax-highlighting"
+  }
+
 install_backup() {
   set_color && echo
   # Create cron job to backup zocker-data folder
@@ -552,6 +576,8 @@ default_logins_summary() {
   echo -e " OpenWebUI Admin| $HOSTIP:$OLLAMAPORT       | <You can create your own> (First one gets admin)            | <You can create your own>"
   echo -e " OpenWebUI      | $HOSTIP:$OLLAMAPORT       | <You can create your own>                                   | <You can create your own>"
   echo -e " Ollama-OCR     | $HOSTIP:$OCRPORT       | N/A                                                         | N/A"
+  echo -e " B-B-Shuffle    | $HOSTIP:$BBSHUFFLEPORT       | N/A                                                         | N/A"
+  echo -e " VSCode         | $HOSTIP:$VSCODEPORT       | N/A                                                         | ${ACTPASSWORD}"
   echo -e "------------------------------------------------------------------------------------------"
 }
 
@@ -589,6 +615,7 @@ create_cyberchef         ## Installing CyberChef...
 create_regex101          ## Installing Regex101...
 create_etherpad          ## Installing Etherpad...
 create_b_b_shuffle       ## Installing B-B-Shuffle...
+create_vscode            ## Installing VSCode...
 #create_sift_remnux       ## Installing SIFT-REMnux...
 
 postcreation_changes() {

@@ -125,6 +125,10 @@ services:
       - name: "Etherpad"
         logo: "assets/tools/etherpad.png"
         url: "http://$HOSTIP:$ETHERPADPORT"
+      
+      - name: "VSCode"
+        logo: "assets/tools/vscode.png"
+        url: "http://$HOSTIP:$VSCODEPORT"
 
       - name: "Draw.io"
         logo: "assets/tools/draw.png"
