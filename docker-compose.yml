@@ -271,3 +271,22 @@ services:
             - "$BBSHUFFLEPORT:80"
         volumes:
             - "${DOCPATH}/zocker-data/B-B-Shuffle/html:/var/www/html:rw"
+    
+    vscode:
+        image: lscr.io/linuxserver/code-server:latest
+        container_name: VSCode
+        hostname: vscode
+        restart: ${DOCKERSTART}
+        ports:
+            - "$VSCODEPORT:8443"
+        environment:
+            - PUID=1000
+            - PGID=1000
+            - TZ=Etc/UTC
+            - PASSWORD=${ACTPASSWORD}
+            - HASHED_PASSWORD=
+            - SUDO_PASSWORD=${ACTPASSWORD}
+            - SUDO_PASSWORD_HASH=
+            - DEFAULT_WORKSPACE=/config/workspace
+        volumes:
+            - "${DOCPATH}/vscode:/config"

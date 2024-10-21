@@ -1,20 +1,23 @@
 #!/bin/bash
 
 create_docker_commands() {
-  # Create executables for stopping and removing Docker containers
+  # Create executables for starting all Docker containers
+  echo '#!/bin/bash' | sudo tee /usr/local/bin/dockerstart
+  echo 'sudo docker start $(docker ps -a --format "{{.Names}}")' | sudo tee -a /usr/local/bin/dockerstart
+  sudo chmod +x /usr/local/bin/dockerstart
+  # Create executables for stopping all Docker containers
   echo '#!/bin/bash' | sudo tee /usr/local/bin/dockerstop
-  echo 'sudo docker stop $(docker ps -aq --format "{{.Names}}")' | sudo tee -a /usr/local/bin/dockerstop
+  echo 'sudo docker stop $(docker ps --format "table \t{{.Names}}")' | sudo tee -a /usr/local/bin/dockerstop
   sudo chmod +x /usr/local/bin/dockerstop
-
+  # Create executables for removing all Docker containers
   echo '#!/bin/bash' | sudo tee /usr/local/bin/dockerrm
-  echo 'sudo docker rm $(docker ps -aq --format "{{.Names}}")' | sudo tee -a /usr/local/bin/dockerrm
+  echo 'sudo docker rm $(docker ps --format "table \t{{.Names}}")' | sudo tee -a /usr/local/bin/dockerrm
   sudo chmod +x /usr/local/bin/dockerrm
-
+  # Create executables for restarting all Docker containers
   echo '#!/bin/bash' | sudo tee /usr/local/bin/dockerrestart
-  echo 'sudo docker restart $(docker ps -aq --format "{{.Names}}")' | sudo tee -a /usr/local/bin/dockerrestart
+  echo 'sudo docker restart $(docker ps --format "table \t{{.Names}}")' | sudo tee -a /usr/local/bin/dockerrestart
   sudo chmod +x /usr/local/bin/dockerrestart
-
-  # Create dockerpss
+  # Create executables for listing all Docker containers
   echo '#!/bin/bash' | sudo tee /usr/local/bin/dockerpss
   echo 'sudo docker ps --format "table \t{{.Names}}\t{{.Status}}\t{{.Ports}}" | sort -k 2' | sudo tee -a /usr/local/bin/dockerpss
   sudo chmod +x /usr/local/bin/dockerpss
@@ -34,9 +37,9 @@ echo
 echo -e "\t\t __  __  ______  __                "
 echo -e "\t\t/\ \/\ \/\  _  \/\ \               "
 echo -e "\t\t\ \ \_\ \ \ \L\ \ \ \      _____   "
-echo -e "\t\t \ \  _  \ \  __ \ \ \  __/\ '__\`\\ "
-echo -e "\t\t  \\ \\ \\ \\ \\ \\ \\/\\ \\ \\ \\L\\ \\ \\ \\L\\ \\"
-echo -e "\t\t   \ \\_\\ \\_\\ \\_\\ \\_\\ \\____/\\ \\ ,__/"
+echo -e "\t\t \ \  _  \ \  __ \ \ \    /\ '__\`\\ "
+echo -e "\t\t  \\ \\ \\ \\ \\ \\ \\/\\ \\ \\ \\ \\ \\ \\ \\L\\ \\"
+echo -e "\t\t   \\ \\_\\ \\_\\ \\_\\ \\_\\ \\____/\\ \\ ,__/"
 echo -e "\t\t    \\/_/\\/_/\\/_/\\/_/\\/___/  \\ \\ \\/ "
 echo -e "\t\t                             \\ \\_\\ "
 echo -e "\t\t                              \\/_/ "
