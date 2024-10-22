@@ -75,7 +75,7 @@ ETHERPADPORT=1013       # Etherpad
 N8NPORT=1014            # N8N
 GITLABPORT=1015         # GitLab
 BBSHUFFLEPORT=1016      # B-B-Shuffle
-VSCODEPORT=1017             # VSCode
+VSCODEPORT=1017         # VSCode
 
 check_root_access() {
   set_color
@@ -96,30 +96,33 @@ check_root_access() {
 check_system_resources() {
   set_color
   echo "--------------------------------------------------------------------------------------"
-  echo "                            CHECKING SYSTEM RESOURCES"
-  echo "                   It's recommended to have 12 Cores and 16GB RAM"
+  echo "                              CHECKING SYSTEM RESOURCES"
+  echo "                     It's recommended to have 12 Cores and 16GB RAM"
+  echo -e "\e[31m Install all tools, and AI Models; it's recommended to have more than 50GB of storage\e[0m"
   echo "--------------------------------------------------------------------------------------"
+  
   cpu_check () {
     echo "Checking CPU Cores..."
     CORES=$(nproc)
     if [[ $CORES -lt 12 ]]; then
-      echo "    You have $CORES CPU Cores. It's recommended to have 8+ Cores."
+      echo -e "    You have \e[31m$CORES CPU Cores\e[0m. It's recommended to have 8+ Cores."
     else
-      echo "    You have $CORES CPU Cores. Moving Forward..."
+      echo "    You have \e[31m$CORES CPU Cores\e[0m. Moving Forward..."
     fi
   }
   cpu_check
+
   mem_check () {
     echo "Checking Memory..."
     MEMORY=$(free -m | awk '/^Mem:/{print $2}')
     if [[ $MEMORY -lt 16000 ]]; then
-      echo "    You have $MEMORY MB of RAM. It's recommended to have 16GB RAM."
+      echo "    You have \e[31m$MEMORY MB of RAM\e[0m. It's recommended to have 16GB RAM."
     else
-      echo "    You have $MEMORY MB of RAM. Moving Forward..."
+      echo "    You have \e[31m$MEMORY MB of RAM\e[0m. Moving Forward..."
     fi
   }
-  
   mem_check
+  
   echo
   read -r -p "             You have CPU Cores: $CORES, RAM: $MEMORY MB. Continue [Y/n]? " answer
   case ${answer:0:1} in n|N ) echo; echo "Exiting."; exit ;; * ) ;; esac
@@ -152,9 +155,9 @@ print_tools_to_install() {
   echo -e "\t Etherpad\t<-  $ETHERPADPORT ->\tCollaborative Document Editing"
   echo -e "\t N8N\t\t<-  $N8NPORT ->\tWorkflow Automation"
   echo -e "\t GitLab\t\t<-  $GITLABPORT ->\tOffline and OpenSource Git"
-  echo -e "\t B-B-Shuffle\t<-  $BBSHUFFLEPORT ->\tB-B-Shuffle"\
+  echo -e "\t B-B-Shuffle\t<-  $BBSHUFFLEPORT ->\tB-B-Shuffle"
   echo -e "\t VSCode\t\t<-  $VSCODEPORT ->\tVSCode"
-
+}
 create_prerequisites() {
   echo "--------------------------------------------------------------------------------------"
   echo "                      UPDATES AND PREREQUISITES SETUP"
@@ -176,53 +179,50 @@ create_prerequisites() {
   # Prompt user for prerequisites
   read -r -p "Do you want to go through the prerequisites? (y/N): " response
   if [[ $response =~ ^[Yy]$ ]]; then
-      echo "Checking and implementing updates..."
-      echo "-----------------------------------------------------------------------------------------"
-      echo
+    echo "Checking and implementing updates..."
+    echo "-----------------------------------------------------------------------------------------"
+    set_color
+    echo "-----------------------------------------------------------------------------------------"
+    echo
+    echo "$package_manager_message"
+    echo
+    echo "-----------------------------------------------------------------------------------------"
+    echo
+    # Update and install prerequisites using the package manager
+    $package_manager update -y
+    $package_manager upgrade -y
+    $package_manager install -y htop git curl net-tools open-vm-tools-desktop openssh-server ca-certificates gnupg lsb-release software-properties-common apt-transport-https openjdk-11-jdk
 
-      counter=$((counter+1)) && counter=$((counter>7 ? 1 : counter)) && tput setaf $counter
+    # Remove old docker if exists
+    $package_manager remove -y docker.io containerd runc docker-compose
 
-      echo "-----------------------------------------------------------------------------------------"
-      echo
-      echo "$package_manager_message"
-      echo
-      echo "-----------------------------------------------------------------------------------------"
-      echo
-      # Update and install prerequisites using the package manager
-      $package_manager update -y
-      $package_manager upgrade -y
-      $package_manager install -y htop git curl net-tools open-vm-tools-desktop openssh-server ca-certificates gnupg lsb-release software-properties-common apt-transport-https openjdk-11-jdk
+    # Update repository with official docker
+    install -m 0755 -d /etc/apt/keyrings
+    if [[ $package_manager == "apt" ]]; then
+        curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+        chmod a+r /etc/apt/keyrings/docker.gpg
+        echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
+    elif [[ $package_manager == "yum" ]]; then
+        yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+    fi
 
-      # Remove old docker if exists
-      $package_manager remove -y docker.io containerd runc docker-compose
+    # Update with new repository then install docker and dependencies
+    $package_manager update -y
+    $package_manager install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 
-      # Update repository with official docker
-      install -m 0755 -d /etc/apt/keyrings
-      if [[ $package_manager == "apt" ]]; then
-          curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
-          chmod a+r /etc/apt/keyrings/docker.gpg
-          echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
-      elif [[ $package_manager == "yum" ]]; then
-          yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
-      fi
-
-      # Update with new repository then install docker and dependencies
-      $package_manager update -y
-      $package_manager install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-
-      # Configure docker to be used without requiring sudo
-      groupadd docker
-      usermod -aG docker "$SUDO_USER"
-      echo "Docker group added. Please relog to update groups or run 'exec sg docker newgrp' to initialize."
-      sudo systemctl set-default multi-user.target
-      echo "Configuration complete"
-      echo "Updates are complete. Moving forward..."
-      echo "------------------------------"
-      echo
+    # Configure docker to be used without requiring sudo
+    groupadd docker
+    usermod -aG docker "$SUDO_USER"
+    echo "Docker group added. Please relog to update groups or run 'exec sg docker newgrp' to initialize."
+    sudo systemctl set-default multi-user.target
+    echo "Configuration complete"
+    echo "Updates are complete. Moving forward..."
+    echo "------------------------------"
+    echo
   else
-      echo
-      echo "                                SKIPPING Prerequisites..."
-      echo
+    echo
+    echo "                                SKIPPING Prerequisites..."
+    echo
   fi
 }
 
@@ -234,27 +234,27 @@ folder_variables_check() {
   echo "--------------------------------------------------------------------------------------"
 
   if [[ -d "${DOCPATH}" ]]; then
-      read -r -p "The folder ""${DOCPATH}"" already exists. Do you want to delete all of it? [y/N]: " remove_folder
-      if [[ $remove_folder =~ ^[Yy]$ ]]; then
-          echo -e "\e[31mWARNING: You are about to delete all pre-made data in ${DOCPATH}. Are you sure? [y/N]: \e[0m"
-          read -r confirm_delete
-          if [[ ! $confirm_delete =~ ^[Yy]$ ]]; then
-            echo "Aborting deletion."
-          fi
-          echo "Removing ""${DOCPATH}""..."
-          rm -d -r "${DOCPATH}"
-          echo "Checking for ""${DOCPATH}""..."
-          if [[ ! -d "${DOCPATH}" ]]; then
-            echo "Folder ""${DOCPATH}"" was removed."
-              set_color && echo "Creating ""${DOCPATH}"""
-              set_color && mkdir -p "${DOCPATH}"/ && echo "mkdir -p ""${DOCPATH}""/" || echo "Failed to create ""${DOCPATH}""/"
-              set_color && chmod -R 777 "${DOCPATH}"/ && echo "chmod -R 777 ""${DOCPATH}""/"
-              set_color && echo "ownership of './zocker-data/' retained as 1000:1000"
-              set_color && install -v -g 1000 -o 1000 -d "${DOCPATH}"/ > /dev/null 2>&1
-              set_color && echo
-          fi
-          ls "${DOCPATH}" > /dev/null 2>&1 && echo "Folder ""${DOCPATH}"" exists." || echo "Folder ""${DOCPATH}"" does not exist."
+    read -r -p "The folder ""${DOCPATH}"" already exists. Do you want to delete all of it? [y/N]: " remove_folder
+    if [[ $remove_folder =~ ^[Yy]$ ]]; then
+      echo -e "\e[31mWARNING: You are about to delete all pre-made data in ${DOCPATH}. Are you sure? [y/N]: \e[0m"
+      read -r confirm_delete
+      if [[ ! $confirm_delete =~ ^[Yy]$ ]]; then
+        echo "Aborting deletion."
       fi
+      echo "Removing ""${DOCPATH}""..."
+      rm -d -r "${DOCPATH}"
+      echo "Checking for ""${DOCPATH}""..."
+      if [[ ! -d "${DOCPATH}" ]]; then
+        echo "Folder ""${DOCPATH}"" was removed."
+          set_color && echo "Creating ""${DOCPATH}"""
+          set_color && mkdir -p "${DOCPATH}"/ && echo "mkdir -p ""${DOCPATH}""/" || echo "Failed to create ""${DOCPATH}""/"
+          set_color && chmod -R 777 "${DOCPATH}"/ && echo "chmod -R 777 ""${DOCPATH}""/"
+          set_color && echo "ownership of './zocker-data/' retained as 1000:1000"
+          set_color && install -v -g 1000 -o 1000 -d "${DOCPATH}"/ > /dev/null 2>&1
+          set_color && echo
+      fi
+      ls "${DOCPATH}" > /dev/null 2>&1 && echo "Folder ""${DOCPATH}"" exists." || echo "Folder ""${DOCPATH}"" does not exist."
+    fi
   fi
 }
 
@@ -285,22 +285,24 @@ set_color && echo
   echo "                  Pulling / Creating Docker Containers for Databases..."
   echo "--------------------------------------------------------------------------------------"
 
-create_bookstack_db() {
+create_bookstack() {
   set_color && echo
   echo -e "\t\tCreating MySQL - BookStack-DB"
-  docker run -d \
-  --name BookStack-DB --hostname bookstack-db --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -e PUID=1000 -e PGID=1000 -e MYSQL_ROOT_PASSWORD=bookstackrootpassword -e TZ=America/Toronto -v "${DOCPATH}"/bookstack/db_data:/config -e MYSQL_DATABASE=bookstackapp -e MYSQL_USER=bookstack -e MYSQL_PASSWORD=bookstackpassword lscr.io/linuxserver/mariadb  #  > /dev/null 2>&1
-}
-create_bookstack() {
+  docker run -d --name BookStack-DB --hostname bookstack-db --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -e PUID=1000 -e PGID=1000 -e MYSQL_ROOT_PASSWORD=bookstackrootpassword -e TZ=America/Toronto -v "${DOCPATH}"/bookstack/db_data:/config -e MYSQL_DATABASE=bookstackapp -e MYSQL_USER=bookstack -e MYSQL_PASSWORD=bookstackpassword lscr.io/linuxserver/mariadb  #  > /dev/null 2>&1
+
+  echo
   echo -e "\t\tCreating Bookstack"
-  docker run -d \
-  --name BookStack --hostname bookstack --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p $BOOKSTACKPORT:80 -v "${DOCPATH}"/bookstack/app_data:/config -v "${DOCPATH}"/bookstack/public:/var/www/bookstack/public:rw -e PUID=1000 -e PGID=1000 -e DB_PORT=3306 -e DB_HOST=BookStack-DB -e APP_URL=http://"$HOSTIP":$BOOKSTACKPORT -e DB_USER=bookstack -e DB_PASS=bookstackpassword -e DB_DATABASE=bookstackapp lscr.io/linuxserver/bookstack:24.05.4  #  > /dev/null 2>&1
+  docker run -d --name BookStack --hostname bookstack --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p $BOOKSTACKPORT:80 -v "${DOCPATH}"/bookstack/app_data:/config -v "${DOCPATH}"/bookstack/public:/var/www/bookstack/public:rw -e PUID=1000 -e PGID=1000 -e DB_PORT=3306 -e DB_HOST=BookStack-DB -e APP_URL=http://"$HOSTIP":$BOOKSTACKPORT -e DB_USER=bookstack -e DB_PASS=bookstackpassword -e DB_DATABASE=bookstackapp lscr.io/linuxserver/bookstack:24.05.4  #  > /dev/null 2>&1
 }
  
-create_planka_db() {
+create_planka() {
   set_color && echo
   echo -e "\t\tCreating PostGres - Planka-DB"
   docker run -d --name Planka-DB --hostname planka-db --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -v "${DOCPATH}"/planka/db-data:/var/lib/postgresql/data:rw -e POSTGRES_DB=planka -e POSTGRES_HOST_AUTH_METHOD=trust postgres:14-alpine 
+
+  echo
+  echo -e "\t\tCreating Planka"
+  docker run -d --name Planka --hostname planka --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p $PLANKAPORT:1337 -e BASE_URL=http://"$HOSTIP":$PLANKAPORT -e DATABASE_URL=postgresql://postgres@Planka-DB/planka -e SECRET_KEY=secretofkeys -e DEFAULT_ADMIN_EMAIL=${LOGINUSER}@planka.local -e DEFAULT_ADMIN_PASSWORD=${ACTPASSWORD} -e DEFAULT_ADMIN_NAME=Admin -e DEFAULT_ADMIN_USERNAME=admin -v "${DOCPATH}"/planka/user-avatars:/app/public/user-avatars -v "${DOCPATH}"/planka/project-background-images:/app/public/project-background-images -v "${DOCPATH}"/planka/attachments:/app/private/attachments ghcr.io/plankanban/planka:latest
 }
 
 create_portainer() {
@@ -315,12 +317,6 @@ create_homer() {
   docker run -d --name Homer --hostname homer --restart ${DOCKERSTART} --network ${HALPNETWORK} -p $HOMERPORT:8080 -u 0:0 -v "${DOCPATH}"/homer:/www/assets:rw -v "${DOCPATH}"/homer/tools:/www/assets/tools:rw -e INIT_ASSETS=1 b4bz/homer:latest 
 }
 
-create_planka() {
-  set_color && echo
-  echo -e "\t\tCreating Planka"
-  docker run -d --name Planka --hostname planka --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p $PLANKAPORT:1337 -e BASE_URL=http://"$HOSTIP":$PLANKAPORT -e DATABASE_URL=postgresql://postgres@Planka-DB/planka -e SECRET_KEY=secretofkeys -e DEFAULT_ADMIN_EMAIL=${LOGINUSER}@planka.local -e DEFAULT_ADMIN_PASSWORD=${ACTPASSWORD} -e DEFAULT_ADMIN_NAME=Admin -e DEFAULT_ADMIN_USERNAME=admin -v "${DOCPATH}"/planka/user-avatars:/app/public/user-avatars -v "${DOCPATH}"/planka/project-background-images:/app/public/project-background-images -v "${DOCPATH}"/planka/attachments:/app/private/attachments ghcr.io/plankanban/planka:latest
-}
-
 create_vaultwarden() {
   set_color && echo
   mkdir -p "${DOCPATH}"/vaultwarden/ssl
@@ -331,6 +327,7 @@ create_vaultwarden() {
   echo -e "\t\tCreating VaultWarden"
   docker run -d --name VaultWarden --hostname vaultwarden --restart ${DOCKERSTART} -e SIGNUPS_ALLOWED=true -e INVITATIONS_ALLOWED=true -e DISABLE_ADMIN_TOKEN=false -e ADMIN_TOKEN='$argon2i$v=19$m=1024,t=1,p=2$em5qbXZ0OWtxQjcySHFINA$4ru65itAqedJVRs2C23JkQ' -e WEBSOCKET_ENABLED=false -p $VAULTPORT:80 -e ROCKET_TLS='{certs="/ssl/bitwarden.crt",key="/ssl/bitwarden.key"}' -v "${DOCPATH}"/vaultwarden/data:/data/:rw -v "${DOCPATH}"/vaultwarden/ssl:/ssl/:rw vaultwarden/server:latest
 }
+
 create_dfir_iris() {
   set_color && echo
   echo -e "\t\tCreating DFIR-IRIS"
@@ -445,17 +442,18 @@ create_sift_remnux() {
   # Prompt the user if they want to build, pull the image from docker-hub, or skip
   set_color && echo
   echo -e "\t\tCreating SIFT-REMnux"
-  echo -e "Building the image can take a while. Potentially 30-60 min. Pulling from Docker-Hub is faster."
-  read -r -p "Do you want to build the image, pull from Docker-Hub, or skip? [B/p/s]: " build_pull_skip
-  if [[ $build_pull_skip =~ ^[Bb]$ ]]; then
+  echo -e "Building the image can take a while. Potentially 30-120 min. Pulling from Docker-Hub is faster."
+  read -r -p "Do you want to build the image, pull from Docker-Hub, or skip? [b/p/S] (default: Skip): " build_pull_skip
+  build_pull_skip=${build_pull_skip:-s}
+  if [[ $build_pull_skip =~ ^[Bb][Uu][Ii][Ll][Dd]$ || $build_pull_skip =~ ^[Bb]$ ]]; then
     # Build the image
     echo "Building the image..."
-    docker build -t sift-remnux -f ./zocker-data/siftnux-docker/Dockerfile   ./zocker-data/siftnux-docker
+    docker build -t sift-remnux -f ./zocker-data/siftnux-docker/Dockerfile ./zocker-data/siftnux-docker
 
     # Run the container
     docker run -d --name SIFT-REMnux --hostname sift-remnux --restart ${DOCKERSTART} -p 33:22 -v "${DOCPATH}"/zocker-data/sift-remnux:/root sift-remnux
 
-  elif [[ $build_pull_skip =~ ^[Pp]$ ]]; then
+  elif [[ $build_pull_skip =~ ^[Pp][Uu][Ll][Ll]$ || $build_pull_skip =~ ^[Pp]$ ]]; then
     # Pull the image
     echo "Pulling the image..."
     docker pull digitalsleuth/sift-remnux:latest
@@ -584,21 +582,51 @@ default_logins_summary() {
   echo -e "------------------------------------------------------------------------------------------"
 }
 
+postcreation_changes() {
+  ## Planka
+  # Using SED, look in the file /app/public/static/css/main.*.css and not the main.*.css.map file and replace "../../static/media/*.jpg" with "../../static/media/cover.jpg"
+  docker exec -it Planka bash -c "sed -i 's/..\/..\/static\/media\/.*.jpg/..\/..\/static\/media\/cover.jpg/g' /app/public/static/css/main.*.css"
+  # Copy an Image from project image to media cover to replace the Splash Screen Image.
+  docker exec -it Planka bash -c "cp /app/public/project-background-images/HALp-Ai-1.jpg /app/public/static/media/cover.jpg"
+
+  ## Replace DFIR-IRIS Logo and Blue Color to Orange
+  #docker exec -it iriswebapp_app bash -c "sed -i 's/#013479, #011d40/794d01, #b4770e/g' /iriswebapp/app/static/assets/css/login/login.css"
+  #docker exec -it iriswebapp_app bash -c "sed -i 's/05316a/794d01/g' /iriswebapp/app/static/assets/css/login/login.css"
+
+  # Docker Copy Command Image
+  docker cp ./Images/iris-logo-white.png iriswebapp_app:/iriswebapp/app/static/assets/img/logo-white.png
+
+  ## Remove Extra Apt Packages
+  sudo apt autoremove -y
+}
+
+install_complete() {
+  set_color && echo
+  echo "--------------------------------------------------------------------------------------"
+  echo "                             Installation Complete"
+  echo "--------------------------------------------------------------------------------------"
+  echo " Setting up Permissions...to be full 777 - Very Insecure, but this should be a closed system"
+  chmod -R 777 "${DOCPATH}"
+  echo " Permissions set to 777"
+  echo "--------------------------------------------------------------------------------------"
+  echo "Insert Profit Here"
+  echo "--------------------------------------------------------------------------------------"
+  echo
+  echo '               docker ps --format "table \t{{.Names}}\t{{.Status}}\t{{.Ports}}" | sort -k 2'
+  dockerpss
+}
+
 check_root_access        ## CHECKING FOR ROOT ACCESS...
 check_system_resources   ## CHECKING SYSTEM RESOURCES
-cpu_check
-mem_check
  
 print_tools_to_install   ## TOOLS TO BE INSTALLED
 create_prerequisites     ## UPDATES AND PREREQUISITES SETUP
 folder_variables_check   ## Data Folder Creation
 network_creation         ## Creating Network...
 
-dashboard_SED
+dashboard_SED            ## Replaces IP and Ports in Homer Config
 
 create_portainer         ## Creating Portainer...
-create_bookstack_db      ## Creating BookStack-DB...
-create_planka_db         ## Creating Planka-DB...
 create_homer             ## Installing Dashboard...
 create_vaultwarden       ## Installing Vaultwarden...
 create_portainer         ## Installing Portainer...
@@ -619,43 +647,14 @@ create_regex101          ## Installing Regex101...
 create_etherpad          ## Installing Etherpad...
 create_b_b_shuffle       ## Installing B-B-Shuffle...
 create_vscode            ## Installing VSCode...
-#create_sift_remnux       ## Installing SIFT-REMnux...
+create_sift_remnux       ## Installing SIFT-REMnux...
 
-postcreation_changes() {
-  ## Planka
-  # Using SED, look in the file /app/public/static/css/main.*.css and not the main.*.css.map file and replace "../../static/media/*.jpg" with "../../static/media/cover.jpg"
-  docker exec -it Planka bash -c "sed -i 's/..\/..\/static\/media\/.*.jpg/..\/..\/static\/media\/cover.jpg/g' /app/public/static/css/main.*.css"
-  # Copy an Image from project image to media cover to replace the Splash Screen Image.
-  docker exec -it Planka bash -c "cp /app/public/project-background-images/HALp-Ai-1.jpg /app/public/static/media/cover.jpg"
+postcreation_changes     ## Post Creation Changes such as replace images or change colors
 
-  ## Replace DFIR-IRIS Logo and Blue Color to Orange
-  #docker exec -it iriswebapp_app bash -c "sed -i 's/#013479, #011d40/794d01, #b4770e/g' /iriswebapp/app/static/assets/css/login/login.css"
-  #docker exec -it iriswebapp_app bash -c "sed -i 's/05316a/794d01/g' /iriswebapp/app/static/assets/css/login/login.css"
-
-  # Docker Copy Command Image
-  docker cp ./Images/iris-logo-white.png iriswebapp_app:/iriswebapp/app/static/assets/img/logo-white.png
-
-  ## Remove Extra Apt Packages
-  sudo apt autoremove -y
-}
-postcreation_changes
-
-fn_summary_cleanup && dockerpss # docker ps -a --format "table {{.ID}}\t{{.Names}}\t{{.Status}}\t{{.Ports}}" | tail -n +2 | sort -k 2
+fn_summary_cleanup       ## SUMMARY of Installation for user to see
 
 default_logins_summary   ## VISIT $HOSTIP:$HOMERPORT TO ACCESS HOMER
 
 #install_backup           ## Creating Backup Cron Job and Running Backup
 
-set_color && echo
-echo "--------------------------------------------------------------------------------------"
-echo "                             Installation Complete"
-echo "--------------------------------------------------------------------------------------"
-echo " Setting up Permissions...to be full 777 - Very Insecure, but this should be a closed system"
-chmod -R 777 "${DOCPATH}"
-echo " Permissions set to 777"
-echo "--------------------------------------------------------------------------------------"
-echo "Insert Profit Here"
-echo "--------------------------------------------------------------------------------------"
-echo
-echo '               docker ps --format "table \t{{.Names}}\t{{.Status}}\t{{.Ports}}" | sort -k 2'
-sudo docker ps --format "table \t{{.Names}}\t{{.Status}}\t{{.Ports}}" | sort -k 2
+install_complete         ## The last part of the script
