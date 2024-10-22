@@ -370,8 +370,8 @@ create_openwebui() {
 
 create_webpage() {
   set_color && echo
-  docker build -t ocr-tool ./zocker-data/OCR/
-  docker run -d --name Ollama-OCR --hostname ollama-ocr --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -v "${DOCPATH}"/zocker-data/OCR/html:/var/www/html:rw -p $OCRPORT:5000 ocr-tool
+  docker build -t ocr-tool "${DOCPATH}"/OCR/
+  docker run -d --name Ollama-OCR --hostname ollama-ocr --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -v "${DOCPATH}"/OCR/html:/var/www/html:rw -p $OCRPORT:5000 ocr-tool
 }
 
 create_drawio() {
