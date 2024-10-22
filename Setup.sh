@@ -107,18 +107,18 @@ check_system_resources() {
     if [[ $CORES -lt 12 ]]; then
       echo -e "    You have \e[31m$CORES CPU Cores\e[0m. It's recommended to have 8+ Cores."
     else
-      echo "    You have \e[31m$CORES CPU Cores\e[0m. Moving Forward..."
+      echo -e "    You have \e[31m$CORES CPU Cores\e[0m. Moving Forward..."
     fi
   }
   cpu_check
 
   mem_check () {
     echo "Checking Memory..."
-    MEMORY=$(free -m | awk '/^Mem:/{print $2}')
-    if [[ $MEMORY -lt 16000 ]]; then
-      echo "    You have \e[31m$MEMORY MB of RAM\e[0m. It's recommended to have 16GB RAM."
+    MEMORY=$(grep MemTotal /proc/meminfo | awk '{print int($2 / 10000)}')
+    if [[ $MEMORY -lt 1600 ]]; then
+      echo -e "    You have \e[31m$MEMORY MB of RAM\e[0m. It's recommended to have 16GB RAM."
     else
-      echo "    You have \e[31m$MEMORY MB of RAM\e[0m. Moving Forward..."
+      echo -e "    You have \e[31m$MEMORY MB of RAM\e[0m. Moving Forward..."
     fi
   }
   mem_check
@@ -159,10 +159,10 @@ print_tools_to_install() {
   echo -e "\t VSCode\t\t<-  $VSCODEPORT ->\tVSCode"
 }
 create_prerequisites() {
+  set_color
   echo "--------------------------------------------------------------------------------------"
   echo "                      UPDATES AND PREREQUISITES SETUP"
   echo "--------------------------------------------------------------------------------------"
-  set_color
   ## Set package manager based on the operating system
   ## This Option was choosen to reduce the overall footprint of the script by about 50 lines since it's practically the same script.
   if [[ -x "$(command -v apt)" ]]; then
@@ -609,10 +609,9 @@ install_complete() {
   chmod -R 777 "${DOCPATH}"
   echo " Permissions set to 777"
   echo "--------------------------------------------------------------------------------------"
-  echo "Insert Profit Here"
+  echo " Insert Profit Here"
   echo "--------------------------------------------------------------------------------------"
   echo
-  echo '               docker ps --format "table \t{{.Names}}\t{{.Status}}\t{{.Ports}}" | sort -k 2'
   dockerpss
 }
 
