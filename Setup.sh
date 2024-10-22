@@ -3,23 +3,23 @@
 create_docker_commands() {
   # Create executables for starting all Docker containers
   echo '#!/bin/bash' | sudo tee /usr/local/bin/dockerstart
-  echo 'sudo docker start $(docker ps -a --format "{{.Names}}")' | sudo tee -a /usr/local/bin/dockerstart
+  echo 'sudo docker start $(docker ps -a --format "{{.Names}}" | tail -n +2)' | sudo tee -a /usr/local/bin/dockerstart
   sudo chmod +x /usr/local/bin/dockerstart
   # Create executables for stopping all Docker containers
   echo '#!/bin/bash' | sudo tee /usr/local/bin/dockerstop
-  echo 'sudo docker stop $(docker ps --format "table \t{{.Names}}")' | sudo tee -a /usr/local/bin/dockerstop
+  echo 'sudo docker stop $(docker ps -a --format "{{.Names}}" | tail -n +2)' | sudo tee -a /usr/local/bin/dockerstop
   sudo chmod +x /usr/local/bin/dockerstop
   # Create executables for removing all Docker containers
   echo '#!/bin/bash' | sudo tee /usr/local/bin/dockerrm
-  echo 'sudo docker rm $(docker ps --format "table \t{{.Names}}")' | sudo tee -a /usr/local/bin/dockerrm
+  echo 'sudo docker rm $(docker ps -a --format "{{.Names}}" | tail -n +2)' | sudo tee -a /usr/local/bin/dockerrm
   sudo chmod +x /usr/local/bin/dockerrm
   # Create executables for restarting all Docker containers
   echo '#!/bin/bash' | sudo tee /usr/local/bin/dockerrestart
-  echo 'sudo docker restart $(docker ps --format "table \t{{.Names}}")' | sudo tee -a /usr/local/bin/dockerrestart
+  echo 'sudo docker restart $(docker ps -a --format "{{.Names}}" | tail -n +2)' | sudo tee -a /usr/local/bin/dockerrestart
   sudo chmod +x /usr/local/bin/dockerrestart
   # Create executables for listing all Docker containers
   echo '#!/bin/bash' | sudo tee /usr/local/bin/dockerpss
-  echo 'sudo docker ps --format "table \t{{.Names}}\t{{.Status}}\t{{.Ports}}" | sort -k 2' | sudo tee -a /usr/local/bin/dockerpss
+  echo 'sudo docker ps -a --format "table \t{{.Names}}\t{{.Status}}\t{{.Ports}}" | tail -n +2' | sudo tee -a /usr/local/bin/dockerpss
   sudo chmod +x /usr/local/bin/dockerpss
 }
 create_docker_commands
@@ -285,36 +285,41 @@ set_color && echo
   echo "                  Pulling / Creating Docker Containers for Databases..."
   echo "--------------------------------------------------------------------------------------"
 
+
+DOCKER_OPTIONS="--restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB"
+
+
 create_bookstack() {
   set_color && echo
   echo -e "\t\tCreating MySQL - BookStack-DB"
-  docker run -d --name BookStack-DB --hostname bookstack-db --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -e PUID=1000 -e PGID=1000 -e MYSQL_ROOT_PASSWORD=bookstackrootpassword -e TZ=America/Toronto -v "${DOCPATH}"/bookstack/db_data:/config -e MYSQL_DATABASE=bookstackapp -e MYSQL_USER=bookstack -e MYSQL_PASSWORD=bookstackpassword lscr.io/linuxserver/mariadb  #  > /dev/null 2>&1
+  docker run -d --name BookStack-DB --hostname bookstack-db $DOCKER_OPTIONS -e PUID=1000 -e PGID=1000 -e MYSQL_ROOT_PASSWORD=bookstackrootpassword -e TZ=America/Toronto -v "${DOCPATH}"/bookstack/db_data:/config -e MYSQL_DATABASE=bookstackapp -e MYSQL_USER=bookstack -e MYSQL_PASSWORD=bookstackpassword lscr.io/linuxserver/mariadb  #  > /dev/null 2>&1
+
 
   echo
   echo -e "\t\tCreating Bookstack"
-  docker run -d --name BookStack --hostname bookstack --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p $BOOKSTACKPORT:80 -v "${DOCPATH}"/bookstack/app_data:/config -v "${DOCPATH}"/bookstack/public:/var/www/bookstack/public:rw -e PUID=1000 -e PGID=1000 -e DB_PORT=3306 -e DB_HOST=BookStack-DB -e APP_URL=http://"$HOSTIP":$BOOKSTACKPORT -e DB_USER=bookstack -e DB_PASS=bookstackpassword -e DB_DATABASE=bookstackapp lscr.io/linuxserver/bookstack:24.05.4  #  > /dev/null 2>&1
+  docker run -d --name BookStack --hostname bookstack $DOCKER_OPTIONS -p $BOOKSTACKPORT:80 -v "${DOCPATH}"/bookstack/app_data:/config -v "${DOCPATH}"/bookstack/public:/var/www/bookstack/public:rw -e PUID=1000 -e PGID=1000 -e DB_PORT=3306 -e DB_HOST=BookStack-DB -e APP_URL=http://"$HOSTIP":$BOOKSTACKPORT -e DB_USER=bookstack -e DB_PASS=bookstackpassword -e DB_DATABASE=bookstackapp lscr.io/linuxserver/bookstack:24.05.4  #  > /dev/null 2>&1
 }
  
 create_planka() {
   set_color && echo
   echo -e "\t\tCreating PostGres - Planka-DB"
-  docker run -d --name Planka-DB --hostname planka-db --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -v "${DOCPATH}"/planka/db-data:/var/lib/postgresql/data:rw -e POSTGRES_DB=planka -e POSTGRES_HOST_AUTH_METHOD=trust postgres:14-alpine 
+  docker run -d --name Planka-DB --hostname planka-db $DOCKER_OPTIONS -v "${DOCPATH}"/planka/db-data:/var/lib/postgresql/data:rw -e POSTGRES_DB=planka -e POSTGRES_HOST_AUTH_METHOD=trust postgres:14-alpine 
 
   echo
   echo -e "\t\tCreating Planka"
-  docker run -d --name Planka --hostname planka --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p $PLANKAPORT:1337 -e BASE_URL=http://"$HOSTIP":$PLANKAPORT -e DATABASE_URL=postgresql://postgres@Planka-DB/planka -e SECRET_KEY=secretofkeys -e DEFAULT_ADMIN_EMAIL=${LOGINUSER}@planka.local -e DEFAULT_ADMIN_PASSWORD=${ACTPASSWORD} -e DEFAULT_ADMIN_NAME=Admin -e DEFAULT_ADMIN_USERNAME=admin -v "${DOCPATH}"/planka/user-avatars:/app/public/user-avatars -v "${DOCPATH}"/planka/project-background-images:/app/public/project-background-images -v "${DOCPATH}"/planka/attachments:/app/private/attachments ghcr.io/plankanban/planka:latest
+  docker run -d --name Planka --hostname planka $DOCKER_OPTIONS -p $PLANKAPORT:1337 -e BASE_URL=http://"$HOSTIP":$PLANKAPORT -e DATABASE_URL=postgresql://postgres@Planka-DB/planka -e SECRET_KEY=secretofkeys -e DEFAULT_ADMIN_EMAIL=${LOGINUSER}@planka.local -e DEFAULT_ADMIN_PASSWORD=${ACTPASSWORD} -e DEFAULT_ADMIN_NAME=Admin -e DEFAULT_ADMIN_USERNAME=admin -v "${DOCPATH}"/planka/user-avatars:/app/public/user-avatars -v "${DOCPATH}"/planka/project-background-images:/app/public/project-background-images -v "${DOCPATH}"/planka/attachments:/app/private/attachments ghcr.io/plankanban/planka:latest
 }
 
 create_portainer() {
   set_color && echo
   echo -e "\t\tCreating Portainer"
-  docker run -d --name Portainer --hostname portainer --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p 0.0.0.0:$PORTAINERPORT:9000 -v /var/run/docker.sock:/var/run/docker.sock portainer/portainer-ce:latest 
+  docker run -d --name Portainer --hostname portainer $DOCKER_OPTIONS -p 0.0.0.0:$PORTAINERPORT:9000 -v /var/run/docker.sock:/var/run/docker.sock portainer/portainer-ce:latest 
 }
 
 create_homer() {
   set_color && echo
   echo -e "\t\tCreating Homer"
-  docker run -d --name Homer --hostname homer --restart ${DOCKERSTART} --network ${HALPNETWORK} -p $HOMERPORT:8080 -u 0:0 -v "${DOCPATH}"/homer:/www/assets:rw -v "${DOCPATH}"/homer/tools:/www/assets/tools:rw -e INIT_ASSETS=1 b4bz/homer:latest 
+  docker run -d --name Homer --hostname homer $DOCKER_OPTIONS -p $HOMERPORT:8080 -u 0:0 -v "${DOCPATH}"/homer:/www/assets:rw -v "${DOCPATH}"/homer/tools:/www/assets/tools:rw -e INIT_ASSETS=1 b4bz/homer:latest 
 }
 
 create_vaultwarden() {
@@ -347,10 +352,10 @@ create_paperless() {
   set_color && echo
   echo -e "\t\tCreating Paperless"
   #docker volume create paperless_{data, media, pgdata, redisdata}
-  docker run -d --name Paperless-Redis --hostname paperless-redis --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -v "${DOCPATH}"/paperless/redisdata:/data docker.io/library/redis:7
+  docker run -d --name Paperless-Redis --hostname paperless-redis $DOCKER_OPTIONS -v "${DOCPATH}"/paperless/redisdata:/data docker.io/library/redis:7
   chmod -R 777 "${DOCPATH}"/paperless/redisdata
-  docker run -d --name Paperless-DB --hostname paperless-db --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -v "${DOCPATH}"/paperless/pgdata:/var/lib/postgresql/data -e POSTGRES_DB=paperless -e POSTGRES_USER=paperless -e POSTGRES_PASSWORD=paperless docker.io/library/postgres:16
-  docker run -d --name Paperless-NGX --hostname paperless-ngx --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p $PAPERLESSPORT:8000 -v "${DOCPATH}"/paperless/data:/usr/src/paperless/data -v "${DOCPATH}"/paperless/media:/usr/src/paperless/media -v "${DOCPATH}"/paperless/export:/usr/src/paperless/export -v "${DOCPATH}"/paperless/consume:/usr/src/paperless/consume -e PAPERLESS_REDIS=redis://Paperless-Redis:6379 -e PAPERLESS_DBHOST=Paperless-DB -e PAPERLESS_OCR_LANGUAGE=eng -e USERMAP_UID=1000 -e USERMAP_GID=1000 -e PAPERLESS_OCR_LANGUAGES=fra ghcr.io/paperless-ngx/paperless-ngx:latest
+  docker run -d --name Paperless-DB --hostname paperless-db $DOCKER_OPTIONS -v "${DOCPATH}"/paperless/pgdata:/var/lib/postgresql/data -e POSTGRES_DB=paperless -e POSTGRES_USER=paperless -e POSTGRES_PASSWORD=paperless docker.io/library/postgres:16
+  docker run -d --name Paperless-NGX --hostname paperless-ngx $DOCKER_OPTIONS -p $PAPERLESSPORT:8000 -v "${DOCPATH}"/paperless/data:/usr/src/paperless/data -v "${DOCPATH}"/paperless/media:/usr/src/paperless/media -v "${DOCPATH}"/paperless/export:/usr/src/paperless/export -v "${DOCPATH}"/paperless/consume:/usr/src/paperless/consume -e PAPERLESS_REDIS=redis://Paperless-Redis:6379 -e PAPERLESS_DBHOST=Paperless-DB -e PAPERLESS_OCR_LANGUAGE=eng -e USERMAP_UID=1000 -e USERMAP_GID=1000 -e PAPERLESS_OCR_LANGUAGES=fra ghcr.io/paperless-ngx/paperless-ngx:latest
   #-e PAPERLESS_URL=https://paperless.example.com
   #-e PAPERLESS_SECRET_KEY=change-me
 }
@@ -358,74 +363,74 @@ create_paperless() {
 create_ollama() {
   set_color && echo
   echo -e "\t\tCreating Ollama LLM"
-  docker run -d --name Ollama-LLM --hostname ollama-llm --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p 11434:11434 -v "${DOCPATH}"/ollama:/root/.ollama ollama/ollama
+  docker run -d --name Ollama-LLM --hostname ollama-llm $DOCKER_OPTIONS -p 11434:11434 -v "${DOCPATH}"/ollama:/root/.ollama ollama/ollama
 }
 
 create_openwebui() {
   # https://github.com/open-webui/open-webui    
   set_color && echo
   echo -e "\t\tCreating OpenWebUI"
-  docker run -d --name OpenWebUI --hostname openwebui --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p $OLLAMAPORT:8080 -e OLLAMA_BASE_URL=http://$HOSTIP:11434 -v ollama:/root/.ollama -v open-webui:/app/backend/data ghcr.io/open-webui/open-webui:main
+  docker run -d --name OpenWebUI --hostname openwebui $DOCKER_OPTIONS -p $OLLAMAPORT:8080 -e OLLAMA_BASE_URL=http://$HOSTIP:11434 -v ollama:/root/.ollama -v open-webui:/app/backend/data ghcr.io/open-webui/open-webui:main
 }
 
 create_webpage() {
   set_color && echo
   docker build -t ocr-tool "${DOCPATH}"/OCR/
-  docker run -d --name Ollama-OCR --hostname ollama-ocr --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -v "${DOCPATH}"/OCR/html:/var/www/html:rw -p $OCRPORT:5000 ocr-tool
+  docker run -d --name Ollama-OCR --hostname ollama-ocr $DOCKER_OPTIONS -v "${DOCPATH}"/OCR/html:/var/www/html:rw -p $OCRPORT:5000 ocr-tool
 }
 
 create_drawio() {
   set_color && echo
   echo -e "\t\tCreating Draw.io"
-  docker run -d --name Draw.io --hostname drawio --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p $DRAWIOPORT:8080   jgraph/drawio:latest
+  docker run -d --name Draw.io --hostname drawio $DOCKER_OPTIONS -p $DRAWIOPORT:8080   jgraph/drawio:latest
 }
 
 create_cyberchef() {
   set_color && echo
   echo -e "\t\tCreating CyberChef"
-  docker run -d --name CyberChef --hostname cyberchef --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p "$CYBERCHEFPORT":8000   mpepping/cyberchef:latest
+  docker run -d --name CyberChef --hostname cyberchef $DOCKER_OPTIONS -p "$CYBERCHEFPORT":8000   mpepping/cyberchef:latest
 }
 
 create_regex101() {
   set_color && echo
   echo -e "\t\tCreating Regex101"
-  docker run -d --name Regex101 --hostname regex101 --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p "$REGEX101PORT":9090   loopsun/regex101
+  docker run -d --name Regex101 --hostname regex101 $DOCKER_OPTIONS -p "$REGEX101PORT":9090   loopsun/regex101
 }
 
 create_ittools() {
   # https://it-tools.tech/docker-run-to-docker-compose-converter
   set_color && echo
   echo -e "\t\tCreating IT Tools"
-  docker run -d --name IT-Tools --hostname it-tools --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p $ITTOOLSPORT:80 corentinth/it-tools:latest
+  docker run -d --name IT-Tools --hostname it-tools $DOCKER_OPTIONS -p $ITTOOLSPORT:80 corentinth/it-tools:latest
 }
 
 create_codimd() {
   # https://hackmd.io/c/codimd-documentation/%2Fs%2Fcodimd-docker-deployment
   set_color && echo
   echo -e "\t\tCreating Codimd DB"
-  docker run -d --name Codimd-DB --hostname codimd-db --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -v "${DOCPATH}"/codimd/db-data:/var/lib/postgresql/data:rw -e POSTGRES_DB=codimd -e POSTGRES_USER=codimd -e POSTGRES_PASSWORD=${ACTPASSWORD}   postgres:14-alpine 
+  docker run -d --name Codimd-DB --hostname codimd-db $DOCKER_OPTIONS -v "${DOCPATH}"/codimd/db-data:/var/lib/postgresql/data:rw -e POSTGRES_DB=codimd -e POSTGRES_USER=codimd -e POSTGRES_PASSWORD=${ACTPASSWORD}   postgres:14-alpine 
   
   echo
   echo -e "\t\tCreating Codimd"
-  docker run -d --name Codimd --hostname codimd --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p $CODIMDPORT:3000 -e CMD_DB_URL=postgres://codimd:${ACTPASSWORD}@Codimd-DB/codimd -e CMD_USECDN=false -v "${DOCPATH}"/codimd/uploads:/home/hackmd/app/public/uploads   hackmdio/hackmd:2.5.4
+  docker run -d --name Codimd --hostname codimd $DOCKER_OPTIONS -p $CODIMDPORT:3000 -e CMD_DB_URL=postgres://codimd:${ACTPASSWORD}@Codimd-DB/codimd -e CMD_USECDN=false -v "${DOCPATH}"/codimd/uploads:/home/hackmd/app/public/uploads   hackmdio/hackmd:2.5.4
 }
 
 create_n8n() {
   set_color && echo
   echo -e "\t\tCreating N8N"
-  docker run -d --name N8N --hostname n8n --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p $N8NPORT:5678 -e N8N_BASIC_AUTH_ACTIVE=true -e N8N_SECURE_COOKIE=false -e N8N_BASIC_AUTH_USER=${LOGINUSER}@n8n.local -e N8N_BASIC_AUTH_PASSWORD=${ACTPASSWORD} -v "${DOCPATH}"/n8n:/home/node/.n8n   n8nio/n8n:latest
+  docker run -d --name N8N --hostname n8n $DOCKER_OPTIONS -p $N8NPORT:5678 -e N8N_BASIC_AUTH_ACTIVE=true -e N8N_SECURE_COOKIE=false -e N8N_BASIC_AUTH_USER=${LOGINUSER}@n8n.local -e N8N_BASIC_AUTH_PASSWORD=${ACTPASSWORD} -v "${DOCPATH}"/n8n:/home/node/.n8n   n8nio/n8n:latest
 }
 
 create_gitlab() {
   set_color && echo
   echo -e "\t\tCreating GitLab"
-  docker run -d --name GitLab --hostname gitlab --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p "$GITLABPORT":80 -v "${DOCPATH}"/gitlab/config:/etc/gitlab:rw -v "${DOCPATH}"/gitlab/logs:/var/log/gitlab:rw -v "${DOCPATH}"/gitlab/data:/var/opt/gitlab:rw gitlab/gitlab-ce:latest
+  docker run -d --name GitLab --hostname gitlab $DOCKER_OPTIONS -p "$GITLABPORT":80 -v "${DOCPATH}"/gitlab/config:/etc/gitlab:rw -v "${DOCPATH}"/gitlab/logs:/var/log/gitlab:rw -v "${DOCPATH}"/gitlab/data:/var/opt/gitlab:rw gitlab/gitlab-ce:latest
 }
 
 create_etherpad() {
   set_color && echo
   echo -e "\t\tCreating Etherpad"
-  docker run -d --name EtherPad --hostname etherpad --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB --pids-limit 2048 -e TZ=America/New_York -e NODE_VERSION=22.8.0 -e YARN_VERSION=1.22.22 -e TIMEZONE= -e NODE_ENV=production -e ETHERPAD_PRODUCTION=1 -p "$ETHERPADPORT":9001 etherpad/etherpad
+  docker run -d --name EtherPad --hostname etherpad $DOCKER_OPTIONS --pids-limit 2048 -e TZ=America/New_York -e NODE_VERSION=22.8.0 -e YARN_VERSION=1.22.22 -e TIMEZONE= -e NODE_ENV=production -e ETHERPAD_PRODUCTION=1 -p "$ETHERPADPORT":9001 etherpad/etherpad
 }
 
 create_b_b_shuffle() {
@@ -435,7 +440,7 @@ create_b_b_shuffle() {
   #cp Images/Orange-Background.png "${DOCPATH}"/B-B-Shuffle/App/img/page-back.png
   git clone https://github.com/p3hndrx/B-B-Shuffle.git "${DOCPATH}"/B-B-Shuffle
   docker build -t b-b-shuffle ./zocker-data/B-B-Shuffle/
-  docker run -d --name B-B-Shuffle --hostname b-b-shuffle --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p "${BBSHUFFLEPORT}":80 -v "${DOCPATH}"/B-B-Shuffle/html:/var/www/html:rw b-b-shuffle
+  docker run -d --name B-B-Shuffle --hostname b-b-shuffle $DOCKER_OPTIONS -p "${BBSHUFFLEPORT}":80 -v "${DOCPATH}"/B-B-Shuffle/html:/var/www/html:rw b-b-shuffle
 }
 
 create_sift_remnux() {
@@ -469,7 +474,7 @@ create_sift_remnux() {
 create_vscode() {
   set_color && echo
   echo -e "\t\tCreating VSCode"
-  docker run -d --name VSCode --hostname vscode --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p $VSCODEPORT:8443 -e PUID=1000 -e PGID=1000 -e TZ=Etc/UTC -e PASSWORD=${ACTPASSWORD} -e HASHED_PASSWORD= -e SUDO_PASSWORD=${ACTPASSWORD} -e SUDO_PASSWORD_HASH= -e DEFAULT_WORKSPACE=/config/workspace -v ${DOCPATH}/vscode:/config lscr.io/linuxserver/code-server:latest
+  docker run -d --name VSCode --hostname vscode $DOCKER_OPTIONS -p $VSCODEPORT:8443 -e PUID=1000 -e PGID=1000 -e TZ=Etc/UTC -e PASSWORD=${ACTPASSWORD} -e HASHED_PASSWORD= -e SUDO_PASSWORD=${ACTPASSWORD} -e SUDO_PASSWORD_HASH= -e DEFAULT_WORKSPACE=/config/workspace -v ${DOCPATH}/vscode:/config lscr.io/linuxserver/code-server:latest
 
   # Install extensions
   echo "Installing VSCode Extensions..."
