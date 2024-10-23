@@ -3,23 +3,23 @@
 create_docker_commands() {
   # Create executables for starting all Docker containers
   echo '#!/bin/bash' | sudo tee /usr/local/bin/dockerstart
-  echo 'sudo docker start $(docker ps -a --format "{{.Names}}" | tail -n +2)' | sudo tee -a /usr/local/bin/dockerstart
+  echo "sudo docker start \$(docker ps -a --format \"{{.Names}}\" | tail -n +2)" | sudo tee -a /usr/local/bin/dockerstart
   sudo chmod +x /usr/local/bin/dockerstart
   # Create executables for stopping all Docker containers
   echo '#!/bin/bash' | sudo tee /usr/local/bin/dockerstop
-  echo 'sudo docker stop $(docker ps -a --format "{{.Names}}" | tail -n +2)' | sudo tee -a /usr/local/bin/dockerstop
+  echo "sudo docker stop \$(docker ps -a --format \"{{.Names}}\" | tail -n +2)" | sudo tee -a /usr/local/bin/dockerstop
   sudo chmod +x /usr/local/bin/dockerstop
   # Create executables for removing all Docker containers
   echo '#!/bin/bash' | sudo tee /usr/local/bin/dockerrm
-  echo 'sudo docker rm $(docker ps -a --format "{{.Names}}" | tail -n +2)' | sudo tee -a /usr/local/bin/dockerrm
+  echo "sudo docker rm \$(docker ps -a --format \"{{.Names}}\" | tail -n +2)" | sudo tee -a /usr/local/bin/dockerrm
   sudo chmod +x /usr/local/bin/dockerrm
   # Create executables for restarting all Docker containers
   echo '#!/bin/bash' | sudo tee /usr/local/bin/dockerrestart
-  echo 'sudo docker restart $(docker ps -a --format "{{.Names}}" | tail -n +2)' | sudo tee -a /usr/local/bin/dockerrestart
+  echo "sudo docker restart \$(docker ps -a --format \"{{.Names}}\" | tail -n +2)" | sudo tee -a /usr/local/bin/dockerrestart
   sudo chmod +x /usr/local/bin/dockerrestart
   # Create executables for listing all Docker containers
   echo '#!/bin/bash' | sudo tee /usr/local/bin/dockerpss
-  echo 'sudo docker ps -a --format "table \t{{.Names}}\t{{.Status}}\t{{.Ports}}" | tail -n +2' | sudo tee -a /usr/local/bin/dockerpss
+  printf 'sudo docker ps -a --format "table \t{{.Names}}\t{{.Status}}\t{{.Ports}}" | tail -n +2\n' | sudo tee -a /usr/local/bin/dockerpss
   sudo chmod +x /usr/local/bin/dockerpss
 }
 create_docker_commands
@@ -337,7 +337,7 @@ create_dfir_iris() {
   set_color && echo
   echo -e "\t\tCreating DFIR-IRIS"
   git clone https://github.com/dfir-iris/iris-web.git "${DOCPATH}/iris-web"
-  cd "${DOCPATH}"/iris-web
+  cd "${DOCPATH}"/iris-web || exit
   git checkout v2.4.12
   cp .env.model .env
   sed -i "s/#IRIS_ADM_USERNAME=administrator/IRIS_ADM_USERNAME=$LOGINUSER/" ./.env
@@ -370,7 +370,7 @@ create_openwebui() {
   # https://github.com/open-webui/open-webui    
   set_color && echo
   echo -e "\t\tCreating OpenWebUI"
-  docker run -d --name OpenWebUI --hostname openwebui --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p $OLLAMAPORT:8080 -e OLLAMA_BASE_URL=http://$HOSTIP:11434 -v ollama:/root/.ollama -v open-webui:/app/backend/data ghcr.io/open-webui/open-webui:main
+  docker run -d --name OpenWebUI --hostname openwebui --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p $OLLAMAPORT:8080 -e OLLAMA_BASE_URL=http://"$HOSTIP":11434 -v ollama:/root/.ollama -v open-webui:/app/backend/data ghcr.io/open-webui/open-webui:main
 }
 
 create_webpage() {
@@ -474,7 +474,7 @@ create_sift_remnux() {
 create_vscode() {
   set_color && echo
   echo -e "\t\tCreating VSCode"
-  docker run -d --name VSCode --hostname vscode --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p $VSCODEPORT:8443 -e PUID=1000 -e PGID=1000 -e TZ=Etc/UTC -e PASSWORD=${ACTPASSWORD} -e HASHED_PASSWORD= -e SUDO_PASSWORD=${ACTPASSWORD} -e SUDO_PASSWORD_HASH= -e DEFAULT_WORKSPACE=/config/workspace -v ${DOCPATH}/vscode:/config lscr.io/linuxserver/code-server:latest
+  docker run -d --name VSCode --hostname vscode --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p $VSCODEPORT:8443 -e PUID=1000 -e PGID=1000 -e TZ=Etc/UTC -e PASSWORD=${ACTPASSWORD} -e HASHED_PASSWORD= -e SUDO_PASSWORD=${ACTPASSWORD} -e SUDO_PASSWORD_HASH= -e DEFAULT_WORKSPACE=/config/workspace -v "${DOCPATH}"/vscode:/config lscr.io/linuxserver/code-server:latest
 
   # Install extensions
   echo "Installing VSCode Extensions..."
@@ -500,14 +500,14 @@ install_backup() {
   echo "--------------------------------------------------------------------------------------"
   echo "                         Creating Backup Cron Job..."
   echo "--------------------------------------------------------------------------------------"
-  echo "0 0 * * * tar -czvf /root/zocker-data-backup.tar.gz -C ${DOCPATH} ." | crontab -
+  echo "0 0 * * * tar -czvf /root/$(basename "${DOCPATH}")-backup.tar.gz -C ${DOCPATH} ." | crontab -
   echo "Cron job created."
 
   # Shutdown all containers and backup the zocker-data folder
   echo "--------------------------------------------------------------------------------------"
   echo "                         Shutting down all containers..."
   echo "--------------------------------------------------------------------------------------"
-  docker stop $(docker ps -a -q) 
+  docker stop "$(docker ps -aq)"
   echo "All containers stopped."
   echo
   echo "--------------------------------------------------------------------------------------"
@@ -521,7 +521,7 @@ install_backup() {
   echo "--------------------------------------------------------------------------------------"
   echo "                         Restarting all containers..."
   echo "--------------------------------------------------------------------------------------"
-  docker start $(docker ps -a -q) 
+  docker start "$(docker ps -aq)"
   echo "All containers restarted."
   echo
   echo "--------------------------------------------------------------------------------------"
