@@ -361,9 +361,31 @@ create_paperless() {
 }
 
 create_ollama() {
+  # https://github.com/ollama/ollama
   set_color && echo
   echo -e "\t\tCreating Ollama LLM"
   docker run -d --name Ollama-LLM --hostname ollama-llm --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p 11434:11434 -v "${DOCPATH}"/ollama:/root/.ollama ollama/ollama
+}
+
+create_llm_gpu_cuda() {
+  # https://stackoverflow.com/questions/63751883/using-gpu-inside-docker-container-cuda-version-n-a-and-torch-cuda-is-availabl
+  set_color && echo
+  echo -e "\t\tCreating Ollama LLM with GPU and CUDA"
+  
+  # Install and prep CUDA Ubuntu
+  echo '#!/bin/bash' | sudo tee /usr/local/bin/dockercuda
+  printf 'sudo docker run --rm --runtime=nvidia --gpus all ubuntu nvidia-smi' | sudo tee -a /usr/local/bin/dockercuda
+  sudo chmod +x /usr/local/bin/dockercuda
+
+  curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | \
+    sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg && \
+    curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list | \
+    sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' | \
+    sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list
+  
+  sudo docker run --rm --runtime=nvidia --gpus all ubuntu nvidia-smi
+
+  echo "You can use the 'dockercuda' command to check if the GPU is working."
 }
 
 create_openwebui() {
@@ -375,23 +397,26 @@ create_openwebui() {
 
 create_webpage() {
   set_color && echo
-  docker build -t ocr-tool "${DOCPATH}"/OCR/
+  docker build -t stable-diffusion-webui "${DOCPATH}"/stable-diffusion-webui/
   docker run -d --name Ollama-OCR --hostname ollama-ocr --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -v "${DOCPATH}"/OCR/html:/var/www/html:rw -p $OCRPORT:5000 ocr-tool
 }
 
 create_drawio() {
+  # https://github.com/jgraph/drawio
   set_color && echo
   echo -e "\t\tCreating Draw.io"
   docker run -d --name Draw.io --hostname drawio --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p $DRAWIOPORT:8080   jgraph/drawio:latest
 }
 
 create_cyberchef() {
+  # https://github.com/mpepping/docker-cyberchef
   set_color && echo
   echo -e "\t\tCreating CyberChef"
   docker run -d --name CyberChef --hostname cyberchef --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p "$CYBERCHEFPORT":8000   mpepping/cyberchef:latest
 }
 
 create_regex101() {
+  # https://github.com/LoopSun/regex101-docker
   set_color && echo
   echo -e "\t\tCreating Regex101"
   docker run -d --name Regex101 --hostname regex101 --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p "$REGEX101PORT":9090   loopsun/regex101
@@ -406,6 +431,7 @@ create_ittools() {
 
 create_codimd() {
   # https://hackmd.io/c/codimd-documentation/%2Fs%2Fcodimd-docker-deployment
+  # https://github.com/hackmdio/codimd
   set_color && echo
   echo -e "\t\tCreating Codimd DB"
   docker run -d --name Codimd-DB --hostname codimd-db --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -v "${DOCPATH}"/codimd/db-data:/var/lib/postgresql/data:rw -e POSTGRES_DB=codimd -e POSTGRES_USER=codimd -e POSTGRES_PASSWORD=${ACTPASSWORD}   postgres:14-alpine 
@@ -416,24 +442,28 @@ create_codimd() {
 }
 
 create_n8n() {
+  # https://github.com/n8n-io/n8n
   set_color && echo
   echo -e "\t\tCreating N8N"
   docker run -d --name N8N --hostname n8n --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p $N8NPORT:5678 -e N8N_BASIC_AUTH_ACTIVE=true -e N8N_SECURE_COOKIE=false -e N8N_BASIC_AUTH_USER=${LOGINUSER}@n8n.local -e N8N_BASIC_AUTH_PASSWORD=${ACTPASSWORD} -v "${DOCPATH}"/n8n:/home/node/.n8n   n8nio/n8n:latest
 }
 
 create_gitlab() {
+  # https://docs.gitlab.com/ee/install/docker/installation.html
   set_color && echo
   echo -e "\t\tCreating GitLab"
   docker run -d --name GitLab --hostname gitlab --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p "$GITLABPORT":80 -v "${DOCPATH}"/gitlab/config:/etc/gitlab:rw -v "${DOCPATH}"/gitlab/logs:/var/log/gitlab:rw -v "${DOCPATH}"/gitlab/data:/var/opt/gitlab:rw gitlab/gitlab-ce:latest
 }
 
 create_etherpad() {
+  # https://github.com/ether/etherpad-lite
   set_color && echo
   echo -e "\t\tCreating Etherpad"
   docker run -d --name EtherPad --hostname etherpad --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB --pids-limit 2048 -e TZ=America/New_York -e NODE_VERSION=22.8.0 -e YARN_VERSION=1.22.22 -e TIMEZONE= -e NODE_ENV=production -e ETHERPAD_PRODUCTION=1 -p "$ETHERPADPORT":9001 etherpad/etherpad
 }
 
 create_b_b_shuffle() {
+  # https://github.com/p3hndrx/B-B-Shuffle
   set_color && echo
   echo -e "\t\tCreating B-B-Shuffle"
   ## If you want to change the background image, you can replace the Orange-Background.png with your own image
@@ -639,6 +669,7 @@ create_bookstack         ## Installing Wiki...
 create_planka            ## Installing KanBan...
 create_paperless         ## Installing Paperless...
 create_ollama            ## Installing Ollama...
+create_llm_gpu_cuda      ## Installing Ollama with GPU and CUDA...
 create_openwebui         ## Installing OpenWebUI...
 create_webpage           ## Installing Ollama-OCR...
 create_ittools           ## Installing IT Tools...
