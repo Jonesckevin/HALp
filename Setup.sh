@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# shellcheck disable=SC1091
+
 create_docker_commands() {
   # Create executables for starting all Docker containers
   echo '#!/bin/bash' | sudo tee /usr/local/bin/dockerstart
@@ -567,7 +569,7 @@ fn_summary_cleanup() {
   echo "-------------------------------------------------------------------------------------------------------------------------"
   echo
   echo "Currently your Docker containers ID are numbers and are as follows:"
-  echo '               docker ps --format "table \t{{.Names}}\t{{.Status}}\t{{.Ports}}" | sort -k 2'
+  echo -e '               docker ps --format \"table \\t{{.Names}}\\t{{.Status}}\\t{{.Ports}}\" | sort -k 2'
   echo "                                      OR " dockerpss ""
   echo "-------------------------------------------------------------------------------------------------------------------------"
   counter=5 && tput setaf $counter
@@ -582,7 +584,6 @@ fn_summary_cleanup() {
   counter=7
   tput setaf $counter
 }
-
 
 default_logins_summary() {
   set_color && echo

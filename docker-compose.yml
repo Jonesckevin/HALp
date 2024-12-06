@@ -1,128 +1,135 @@
----
+
 services:
-    bookstack-db:
+    bookstack:
         image: lscr.io/linuxserver/mariadb
-        container_name: BookStack-DB
-        hostname: bookstack-db
-        restart: ${DOCKERSTART}
+        volumes:
+            - '${DOCPATH}/planka/db-data:/var/lib/postgresql/data'
         environment:
-            - PUID=1000
-            - PGID=1000
-            - MYSQL_ROOT_PASSWORD=bookstackrootpassword
-            - TZ=America/Toronto
             - MYSQL_DATABASE=bookstackapp
             - MYSQL_USER=bookstack
             - MYSQL_PASSWORD=bookstackpassword
-        volumes:
-            - "${DOCPATH}/bookstack/db_data:/config"
-
-    bookstack:
-        image: lscr.io/linuxserver/bookstack:24.05.4
-        container_name: BookStack
-        hostname: bookstack
-        restart: ${DOCKERSTART}
-        ports:
-            - "$BOOKSTACKPORT:80"
-        volumes:
-            - "${DOCPATH}/bookstack/app_data:/config"
-            - "${DOCPATH}/bookstack/public:/var/www/bookstack/public:rw"
-        environment:
-            - PUID=1000
+            - TZ=America/Toronto
+            - MYSQL_ROOT_PASSWORD=bookstackrootpassword
             - PGID=1000
-            - DB_PORT=3306
-            - DB_HOST=BookStack-DB
-            - APP_URL=http://$HOSTIP:$BOOKSTACKPORT
-            - DB_USER=bookstack
-            - DB_PASS=bookstackpassword
+            - PUID=1000
+        restart: '${DOCKERSTART}'
+        hostname: bookstack-db
+        container_name: BookStack-DB
+
+    linuxserver:
+        image: 'lscr.io/linuxserver/bookstack:24.05.4'
+        environment:
             - DB_DATABASE=bookstackapp
-
-    planka-db:
-        image: postgres:14-alpine
-        container_name: Planka-DB
-        hostname: planka-db
-        restart: ${DOCKERSTART}
+            - DB_PASS=bookstackpassword
+            - DB_USER=bookstack
+            - 'APP_URL=http://'
+            - DB_HOST=BookStack-DB
+            - DB_PORT=3306
+            - PGID=1000
+            - PUID=1000
         volumes:
-            - "${DOCPATH}/planka/db-data:/var/lib/postgresql/data:rw"
-        environment:
-            - POSTGRES_DB=planka
-            - POSTGRES_HOST_AUTH_METHOD=trust
-
-    portainer:
-        image: portainer/portainer-ce:latest
-        container_name: Portainer
-        hostname: portainer
-        restart: ${DOCKERSTART}
+            - '${DOCPATH}/bookstack/public:/var/www/bookstack/public:rw'
+            - '${DOCPATH}/bookstack/app_data:/config'
         ports:
-            - "0.0.0.0:$PORTAINERPORT:9000"
-        volumes:
-            - /var/run/docker.sock:/var/run/docker.sock
-
-    homer:
-        image: b4bz/homer:latest
-        container_name: Homer
-        hostname: homer
-        restart: ${DOCKERSTART}
-        ports:
-            - "$HOMERPORT:8080"
-        user: "0:0"
-        volumes:
-            - "${DOCPATH}/homer:/www/assets:rw"
-            - "${DOCPATH}/homer/tools:/www/assets/tools:rw"
-        environment:
-            - INIT_ASSETS=1
+            - '$BOOKSTACKPORT:80'
+        restart: '${DOCKERSTART}'
+        hostname: bookstack
+        container_name: BookStack
 
     planka:
-        image: ghcr.io/plankanban/planka:latest
-        container_name: Planka
-        hostname: planka
-        restart: ${DOCKERSTART}
-        ports:
-            - "$PLANKAPORT:1337"
-        environment:
-            - BASE_URL=http://$HOSTIP:$PLANKAPORT
-            - DATABASE_URL=postgresql://postgres@Planka-DB/planka
-            - SECRET_KEY=secretofkeys
-            - DEFAULT_ADMIN_EMAIL=${LOGINUSER}@planka.local
-            - DEFAULT_ADMIN_PASSWORD=${ACTPASSWORD}
-            - DEFAULT_ADMIN_NAME=Admin
-            - DEFAULT_ADMIN_USERNAME=admin
+        command: '-e POSTGRES_DB=planka -e POSTGRES_HOST_AUTH_METHOD=trust postgres:14-alpine'
+        image: postgres:14-alpine
         volumes:
-            - "${DOCPATH}/planka/user-avatars:/app/public/user-avatars"
-            - "${DOCPATH}/planka/project-background-images:/app/public/project-background-images"
-            - "${DOCPATH}/planka/attachments:/app/private/attachments"
+            - '${DOCPATH}'
+        restart: '${DOCKERSTART}'
+        hostname: planka-db
+        container_name: Planka-DB
+
+    plankanban:
+        image: 'ghcr.io/plankanban/planka:latest'
+        volumes:
+            - '${DOCPATH}/planka/attachments:/app/private/attachments'
+            - '${DOCPATH}/planka/project-background-images:/app/public/project-background-images'
+            - '${DOCPATH}/planka/user-avatars:/app/public/user-avatars'
+        environment:
+            - DEFAULT_ADMIN_USERNAME=admin
+            - DEFAULT_ADMIN_NAME=Admin
+            - 'DEFAULT_ADMIN_PASSWORD=${ACTPASSWORD}'
+            - 'DEFAULT_ADMIN_EMAIL=${LOGINUSER}@planka.local'
+            - SECRET_KEY=secretofkeys
+            - 'DATABASE_URL=postgresql://postgres@Planka-DB/planka'
+            - 'BASE_URL=http://'
+        ports:
+            - '$PLANKAPORT:1337'
+        restart: '${DOCKERSTART}'
+        hostname: planka
+        container_name: Planka
+
+    portainer-ce:
+        image: 'portainer/portainer-ce:latest'
+        volumes:
+            - '/var/run/docker.sock:/var/run/docker.sock'
+        ports:
+            - '0.0.0.0:$PORTAINERPORT:9000'
+        restart: '${DOCKERSTART}'
+        hostname: portainer
+        container_name: Portainer
+
+    homer:
+        image: 'b4bz/homer:latest'
+        environment:
+            - INIT_ASSETS=1
+        volumes:
+            - '${DOCPATH}/homer/tools:/www/assets/tools:rw'
+            - '${DOCPATH}/homer:/www/assets:rw'
+        user: '0:0'
+        ports:
+            - '$HOMERPORT:8080'
+        restart: '${DOCKERSTART}'
+        hostname: homer
+        container_name: Homer
+
+    vaultwarden:
+        command: 'openssl req -nodes -x509 -newkey rsa:4096 -keyout /ssl/bitwarden.key -out /ssl/bitwarden.crt -days 365 -subj "/C=CA/ST=Ontario/L=Ottawa/O=TF/CN=bitwarden.local"'
+        image: 'vaultwarden/server:latest'
+        volumes:
+            - '${DOCPATH}/vaultwarden/ssl:/ssl/:rw'
+            - '${DOCPATH}/vaultwarden/data:/data/'
+        ports:
+            - '$VAULTPORT:80'
+        environment:
+            - ROCKET_TLS='{certs="/ssl/bitwarden.crt",key="/ssl/bitwarden.key"}'
+            - WEBSOCKET_ENABLED=false
+            - ADMIN_TOKEN=$ARGONIDS
+            - DISABLE_ADMIN_TOKEN=false
+            - INVITATIONS_ALLOWED=true
+            - SIGNUPS_ALLOWED=true
+        restart: '${DOCKERSTART}'
+        hostname: vaultwarden
+        container_name: VaultWarden
 
     paperless-redis:
-        image: docker.io/library/redis:7
-        container_name: Paperless-Redis
-        hostname: paperless-redis
-        restart: ${DOCKERSTART}
+        image: 'docker.io/library/redis:7'
         volumes:
-            - "${DOCPATH}/paperless/redisdata:/data"
+            - '${DOCPATH}/paperless/redisdata:/data'
+        restart: '${DOCKERSTART}'
+        hostname: paperless-redis
+        container_name: Paperless-Redis
 
     paperless-db:
-        image: docker.io/library/postgres:16
-        container_name: Paperless-DB
-        hostname: paperless-db
-        restart: ${DOCKERSTART}
-        volumes:
-            - "${DOCPATH}/paperless/pgdata:/var/lib/postgresql/data"
+        image: 'docker.io/library/postgres:16'
         environment:
-            - POSTGRES_DB=paperless
-            - POSTGRES_USER=paperless
             - POSTGRES_PASSWORD=paperless
+            - POSTGRES_USER=paperless
+            - POSTGRES_DB=paperless
+        volumes:
+            - '${DOCPATH}/paperless/pgdata:/var/lib/postgresql/data'
+        restart: '${DOCKERSTART}'
+        hostname: paperless-db
+        container_name: Paperless-DB
 
     paperless-ngx:
-        image: ghcr.io/paperless-ngx/paperless-ngx:latest
-        container_name: Paperless-NGX
-        hostname: paperless-ngx
-        restart: ${DOCKERSTART}
-        ports:
-            - "$PAPERLESSPORT:8000"
-        volumes:
-            - "${DOCPATH}/paperless/data:/usr/src/paperless/data"
-            - "${DOCPATH}/paperless/media:/usr/src/paperless/media"
-            - "${DOCPATH}/paperless/export:/usr/src/paperless/export"
-            - "${DOCPATH}/paperless/consume:/usr/src/paperless/consume"
+        image: 'ghcr.io/paperless-ngx/paperless-ngx:latest'
         environment:
             - PAPERLESS_REDIS=redis://Paperless-Redis:6379
             - PAPERLESS_DBHOST=Paperless-DB
@@ -130,155 +137,159 @@ services:
             - USERMAP_UID=1000
             - USERMAP_GID=1000
             - PAPERLESS_OCR_LANGUAGES=fra
+        volumes:
+            - '${DOCPATH}/paperless/data:/usr/src/paperless/data'
+            - '${DOCPATH}/paperless/media:/usr/src/paperless/media'
+            - '${DOCPATH}/paperless/export:/usr/src/paperless/export'
+            - '${DOCPATH}/paperless/consume:/usr/src/paperless/consume'
+        ports:
+            - '$PAPERLESSPORT:8000'
+        restart: '${DOCKERSTART}'
+        hostname: paperless-ngx
+        container_name: Paperless-NGX
 
     ollama-llm:
-        image: ollama/ollama
-        container_name: Ollama-LLM
+        image: 'ollama/ollama:latest'
+        volumes:
+            - '${DOCPATH}/ollama:/root/.ollama'
+        restart: '${DOCKERSTART}'
         hostname: ollama-llm
-        restart: ${DOCKERSTART}
-        ports:
-            - "11434:11434"
-        volumes:
-            - "${DOCPATH}/ollama:/root/.ollama"
+        container_name: Ollama-LLM
 
-    openwebui:
-        image: ghcr.io/open-webui/open-webui:main
-        container_name: OpenWebUI
-        hostname: openwebui
-        restart: ${DOCKERSTART}
-        ports:
-            - "$OLLAMAPORT:8080"
+    ollama-webui:
+        image: 'ghcr.io/open-webui/open-webui:main'
         environment:
-            - OLLAMA_BASE_URL=http://$HOSTIP:11434
-        volumes:
-            - ${DOCPATH}/ollama:/root/.ollama
-            - ${DOCPATH}/open-webui:/app/backend/data
+            - OLLAMA_BASE_URL=http://"$HOSTIP":11434
+        ports:
+            - '$OLLAMAPORT:8080'
+        restart: '${DOCKERSTART}'
+        hostname: ollama-webui
+        container_name: OpenWebUI
 
     ollama-ocr:
-        build: ./zocker-data/OCR/
-        container_name: Ollama-OCR
-        hostname: ollama-ocr
-        restart: ${DOCKERSTART}
-        ports:
-            - "$OCRPORT:5000"
+        build:
+            context: '${DOCPATH}/OCR/'
         volumes:
-            - "${DOCPATH}/zocker-data/OCR/html:/var/www/html:rw"
+            - '${DOCPATH}/OCR/html:/var/www/html'
+        ports:
+            - '$OCRPORT:5000'
+        restart: '${DOCKERSTART}'
+        hostname: ollama-ocr
+        container_name: Ollama-OCR
 
     drawio:
-        image: jgraph/drawio:latest
-        container_name: Draw.io
-        hostname: drawio
-        restart: ${DOCKERSTART}
+        image: 'jgraph/drawio:latest'
         ports:
-            - "$DRAWIOPORT:8080"
+            - '$DRAWIOPORT:8080'
+        restart: '${DOCKERSTART}'
+        hostname: drawio
+        container_name: Draw.io
 
     cyberchef:
-        image: mpepping/cyberchef:latest
-        container_name: CyberChef
-        hostname: cyberchef
-        restart: ${DOCKERSTART}
+        image: 'mpepping/cyberchef:latest'
         ports:
-            - "$CYBERCHEFPORT:8000"
+            - '$CYBERCHEFPORT:8000'
+        restart: '${DOCKERSTART}'
+        hostname: cyberchef
+        container_name: CyberChef
 
     regex101:
-        image: loopsun/regex101
-        container_name: Regex101
-        hostname: regex101
-        restart: ${DOCKERSTART}
+        image: 'loopsun/regex101'
         ports:
-            - "$REGEX101PORT:9090"
+            - '$REGEX101PORT:9090'
+        restart: '${DOCKERSTART}'
+        hostname: regex101
+        container_name: Regex101
 
     it-tools:
-        image: corentinth/it-tools:latest
-        container_name: IT-Tools
-        hostname: it-tools
-        restart: ${DOCKERSTART}
+        image: 'corentinth/it-tools:latest'
         ports:
-            - "$ITTOOLSPORT:80"
+            - '$ITTOOLSPORT:80'
+        restart: '${DOCKERSTART}'
+        hostname: it-tools
+        container_name: IT-Tools
 
     codimd-db:
-        image: postgres:14-alpine
-        container_name: Codimd-DB
-        hostname: codimd-db
-        restart: ${DOCKERSTART}
-        volumes:
-            - "${DOCPATH}/codimd/db-data:/var/lib/postgresql/data:rw"
+        image: 'postgres:14-alpine'
         environment:
             - POSTGRES_DB=codimd
             - POSTGRES_USER=codimd
             - POSTGRES_PASSWORD=${ACTPASSWORD}
+        volumes:
+            - '${DOCPATH}/codimd/db-data:/var/lib/postgresql/data'
+        restart: '${DOCKERSTART}'
+        hostname: codimd-db
+        container_name: Codimd-DB
 
     codimd:
-        image: hackmdio/hackmd:2.5.4
-        container_name: Codimd
-        hostname: codimd
-        restart: ${DOCKERSTART}
-        ports:
-            - "$CODIMDPORT:3000"
+        image: 'hackmdio/hackmd:2.5.4'
         environment:
             - CMD_DB_URL=postgres://codimd:${ACTPASSWORD}@Codimd-DB/codimd
             - CMD_USECDN=false
         volumes:
-            - "${DOCPATH}/codimd/uploads:/home/hackmd/app/public/uploads"
+            - '${DOCPATH}/codimd/uploads:/home/hackmd/app/public/uploads'
+        ports:
+            - '$CODIMDPORT:3000'
+        restart: '${DOCKERSTART}'
+        hostname: codimd
+        container_name: Codimd
 
     n8n:
-        image: n8nio/n8n:latest
-        container_name: N8N
-        hostname: n8n
-        restart: ${DOCKERSTART}
-        ports:
-            - "$N8NPORT:5678"
-        environment:
-            - N8N_BASIC_AUTH_ACTIVE=true
-            - N8N_SECURE_COOKIE=false
-            - N8N_BASIC_AUTH_USER=${LOGINUSER}@n8n.local
-            - N8N_BASIC_AUTH_PASSWORD=${ACTPASSWORD}
+        image: 'n8nio/n8n:latest'
         volumes:
-            - "${DOCPATH}/n8n:/home/node/.n8n"
+            - '${DOCPATH}/n8n:/home/node/.n8n'
+        environment:
+            - 'N8N_BASIC_AUTH_PASSWORD=${ACTPASSWORD}'
+            - 'N8N_BASIC_AUTH_USER=${LOGINUSER}@n8n.local'
+            - N8N_SECURE_COOKIE=false
+            - N8N_BASIC_AUTH_ACTIVE=true
+        ports:
+            - '$N8NPORT:5678'
+        restart: '${DOCKERSTART}'
+        hostname: n8n
+        container_name: N8N
 
     gitlab:
-        image: gitlab/gitlab-ce:latest
-        container_name: GitLab
-        hostname: gitlab
-        restart: ${DOCKERSTART}
-        ports:
-            - "$GITLABPORT:80"
+        image: 'gitlab/gitlab-ce:latest'
         volumes:
-            - "${DOCPATH}/gitlab/config:/etc/gitlab:rw"
-            - "${DOCPATH}/gitlab/logs:/var/log/gitlab:rw"
-            - "${DOCPATH}/gitlab/data:/var/opt/gitlab:rw"
+            - '${DOCPATH}/gitlab/config:/etc/gitlab'
+            - '${DOCPATH}/gitlab/logs:/var/log/gitlab'
+            - '${DOCPATH}/gitlab/data:/var/opt/gitlab'
+        ports:
+            - '$GITLABPORT:80'
+        restart: '${DOCKERSTART}'
+        hostname: gitlab
+        container_name: GitLab
 
     etherpad:
-        image: etherpad/etherpad
-        container_name: EtherPad
-        hostname: etherpad
-        restart: ${DOCKERSTART}
-        ports:
-            - "$ETHERPADPORT:9001"
+        image: 'etherpad/etherpad:latest'
         environment:
             - TZ=America/New_York
             - NODE_VERSION=22.8.0
             - YARN_VERSION=1.22.22
+            - TIMEZONE=
             - NODE_ENV=production
             - ETHERPAD_PRODUCTION=1
+        ports:
+            - '$ETHERPADPORT:9001'
+        restart: '${DOCKERSTART}'
+        hostname: etherpad
+        container_name: EtherPad
 
     b-b-shuffle:
-        build: ./zocker-data/B-B-Shuffle/
-        container_name: B-B-Shuffle
-        hostname: b-b-shuffle
-        restart: ${DOCKERSTART}
-        ports:
-            - "$BBSHUFFLEPORT:80"
+        build:
+            context: '${DOCPATH}/B-B-Shuffle/'
         volumes:
-            - "${DOCPATH}/zocker-data/B-B-Shuffle/html:/var/www/html:rw"
-    
-    vscode:
-        image: lscr.io/linuxserver/code-server:latest
-        container_name: VSCode
-        hostname: vscode
-        restart: ${DOCKERSTART}
+            - '${DOCPATH}/B-B-Shuffle/html:/var/www/html'
         ports:
-            - "$VSCODEPORT:8443"
+            - '$BBSHUFFLEPORT:80'
+        restart: '${DOCKERSTART}'
+        hostname: b-b-shuffle
+        container_name: B-B-Shuffle
+
+    vscode:
+        command: 'code-server --install-extension esbenp.prettier-vscode ms-python.debugpy redhat.vscode-yaml redhat.vscode-xml gitlab.gitlab-workflow vscode-icons-team.vscode-icons yzhang.markdown-all-in-one mechatroner.rainbow-csv oderwat.indent-rainbow shd101wyy.markdown-preview-enhanced grapecity.gc-excelviewer bierner.markdown-mermaid bpruitt-goddard.mermaid-markdown-syntax-highlighting'
+        image: 'lscr.io/linuxserver/code-server:latest'
         environment:
             - PUID=1000
             - PGID=1000
@@ -289,4 +300,9 @@ services:
             - SUDO_PASSWORD_HASH=
             - DEFAULT_WORKSPACE=/config/workspace
         volumes:
-            - "${DOCPATH}/vscode:/config"
+            - '${DOCPATH}/vscode:/config'
+        ports:
+            - '$VSCODEPORT:8443'
+        restart: '${DOCKERSTART}'
+        hostname: vscode
+        container_name: VSCode
