@@ -259,7 +259,7 @@ folder_variables_check() {
           set_color && echo "Creating ""${DOCPATH}"""
           set_color && mkdir -p "${DOCPATH}"/ && echo "mkdir -p ""${DOCPATH}""/" || echo "Failed to create ""${DOCPATH}""/"
           set_color && chmod -R 777 "${DOCPATH}"/ && echo "chmod -R 777 ""${DOCPATH}""/"
-          set_color && echo "ownership of '"${DOCPATH}"' retained as 1000:1000"
+          set_color && echo "ownership of '""${DOCPATH}""' retained as 1000:1000"
           set_color && install -v -g 1000 -o 1000 -d "${DOCPATH}"/ > /dev/null 2>&1
           set_color && echo
       fi
@@ -478,7 +478,7 @@ create_remmina() {
   # https://github.com/linuxserver/docker-remmina
   set_color && echo
   echo -e "\t\tCreating Remmina"
-  docker run -d --name Remmina --hostname remmina -e PUID=1000 -e PGID=1000 -e TZ=Etc/UTC -p $REMMINAPORT:3000 -p 3001:3001 -v ./remmina/config:/config --restart unless-stopped lscr.io/linuxserver/remmina:latest
+  docker run -d --name Remmina --hostname remmina -e PUID=1000 -e PGID=1000 -e TZ=Etc/UTC -p $REMMINAPORT:3000 -p 3001:3001 -v "${DOCPATH}"/remmina/config:/config --restart unless-stopped lscr.io/linuxserver/remmina:latest
 }
 
 create_b_b_shuffle() {
@@ -576,7 +576,7 @@ install_backup() {
   echo "--------------------------------------------------------------------------------------"
    # Backup the "${DOCPATH}" folder as root
   echo "--------------------------------------------------------------------------------------"
-  echo "                         Backing up "${DOCPATH}" folder..."
+  echo "                         Backing up ""${DOCPATH}"" folder..."
   echo "--------------------------------------------------------------------------------------"
   tar -czvf /root/zocker-data-backup.tar.gz -C "${DOCPATH}" .
   echo "Backup completed: /root/zocker-data-backup.tar.gz"
