@@ -57,6 +57,7 @@ ACTPASSWORD="password"
 DOCKERSTART=always
 HALPNETWORK="halp"
 DOCPATH=$(pwd)/zocker-data
+ALLOWEDIPS="0.0.0.0"
 
 ## Ports
 HOMERPORT=80            # Homer
@@ -302,7 +303,7 @@ create_bookstack() {
 
   echo
   echo -e "\t\tCreating Bookstack"
-  docker run -d --name BookStack --hostname bookstack --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p $BOOKSTACKPORT:80 -v "${DOCPATH}"/bookstack/app_data:/config -v "${DOCPATH}"/bookstack/public:/var/www/bookstack/public:rw -e PUID=1000 -e PGID=1000 -e DB_PORT=3306 -e DB_HOST=BookStack-DB -e APP_URL=http://"$HOSTIP":$BOOKSTACKPORT -e DB_USER=bookstack -e DB_PASS=bookstackpassword -e DB_DATABASE=bookstackapp lscr.io/linuxserver/bookstack:24.05.4  #  > /dev/null 2>&1
+  docker run -d --name BookStack --hostname bookstack --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p $ALLOWEDIPS:$BOOKSTACKPORT:80 -v "${DOCPATH}"/bookstack/app_data:/config -v "${DOCPATH}"/bookstack/public:/var/www/bookstack/public:rw -e PUID=1000 -e PGID=1000 -e DB_PORT=3306 -e DB_HOST=BookStack-DB -e APP_URL=http://"$HOSTIP":$BOOKSTACKPORT -e DB_USER=bookstack -e DB_PASS=bookstackpassword -e DB_DATABASE=bookstackapp lscr.io/linuxserver/bookstack:24.05.4  #  > /dev/null 2>&1
 }
  
 create_planka() {
@@ -312,13 +313,13 @@ create_planka() {
 
   echo
   echo -e "\t\tCreating Planka"
-  docker run -d --name Planka --hostname planka --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p $PLANKAPORT:1337 -e BASE_URL=http://"$HOSTIP":$PLANKAPORT -e DATABASE_URL=postgresql://postgres@Planka-DB/planka -e SECRET_KEY=secretofkeys -e DEFAULT_ADMIN_EMAIL=${LOGINUSER}@planka.local -e DEFAULT_ADMIN_PASSWORD=${ACTPASSWORD} -e DEFAULT_ADMIN_NAME=Admin -e DEFAULT_ADMIN_USERNAME=admin -v "${DOCPATH}"/planka/user-avatars:/app/public/user-avatars -v "${DOCPATH}"/planka/project-background-images:/app/public/project-background-images -v "${DOCPATH}"/planka/attachments:/app/private/attachments ghcr.io/plankanban/planka:latest
+  docker run -d --name Planka --hostname planka --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p $ALLOWEDIPS:$PLANKAPORT:1337 -e BASE_URL=http://"$HOSTIP":$PLANKAPORT -e DATABASE_URL=postgresql://postgres@Planka-DB/planka -e SECRET_KEY=secretofkeys -e DEFAULT_ADMIN_EMAIL=${LOGINUSER}@planka.local -e DEFAULT_ADMIN_PASSWORD=${ACTPASSWORD} -e DEFAULT_ADMIN_NAME=Admin -e DEFAULT_ADMIN_USERNAME=admin -v "${DOCPATH}"/planka/user-avatars:/app/public/user-avatars -v "${DOCPATH}"/planka/project-background-images:/app/public/project-background-images -v "${DOCPATH}"/planka/attachments:/app/private/attachments ghcr.io/plankanban/planka:latest
 }
 
 create_portainer() {
   set_color && echo
   echo -e "\t\tCreating Portainer"
-  docker run -d --name Portainer --hostname portainer --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p 0.0.0.0:$PORTAINERPORT:9000 -v /var/run/docker.sock:/var/run/docker.sock portainer/portainer-ce:latest 
+  docker run -d --name Portainer --hostname portainer --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p $ALLOWEDIPS:$PORTAINERPORT:9000 -v /var/run/docker.sock:/var/run/docker.sock portainer/portainer-ce:latest 
 }
 
 create_homer() {
@@ -397,48 +398,48 @@ create_openwebui() {
   # https://github.com/open-webui/open-webui    
   set_color && echo
   echo -e "\t\tCreating OpenWebUI"
-  docker run -d --name OpenWebUI --hostname openwebui --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p $OLLAMAPORT:8080 -e OLLAMA_BASE_URL=http://"$HOSTIP":11434 -v ollama:/root/.ollama -v open-webui:/app/backend/data ghcr.io/open-webui/open-webui:main
+  docker run -d --name OpenWebUI --hostname openwebui --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p $ALLOWEDIPS:$OLLAMAPORT:8080 -e OLLAMA_BASE_URL=http://"$HOSTIP":11434 -v ollama:/root/.ollama -v open-webui:/app/backend/data ghcr.io/open-webui/open-webui:main
 }
 
 create_webpage() {
   set_color && echo
-  docker build -t stable-diffusion-webui "${DOCPATH}"/stable-diffusion-webui/
-  docker run -d --name Ollama-OCR --hostname ollama-ocr --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -v "${DOCPATH}"/OCR/html:/var/www/html:rw -p $OCRPORT:5000 ocr-tool
+  docker build -t ollama-ocr "${DOCPATH}"/OCR/
+  docker run -d --name Ollama-OCR --hostname ollama-ocr --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -v "${DOCPATH}"/OCR/html:/var/www/html:rw -p $ALLOWEDIPS:$OCRPORT:5000 ollama-ocr
 }
 
 create_drawio() {
   # https://github.com/jgraph/drawio
   set_color && echo
   echo -e "\t\tCreating Draw.io"
-  docker run -d --name Draw.io --hostname drawio --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p $DRAWIOPORT:8080 jgraph/drawio:latest
+  docker run -d --name Draw.io --hostname drawio --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p $ALLOWEDIPS:$DRAWIOPORT:8080 jgraph/drawio:latest
 }
 
 create_photopea() {
   # 
   set_color && echo
   echo -e "\t\tCreating Photopea"
-  docker run -d --name Photopea --hostname photopea --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p $PHOTOPEAPORT:8887 eorendel/photopea:latest
+  docker run -d --name Photopea --hostname photopea --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p $ALLOWEDIPS:$PHOTOPEAPORT:8887 eorendel/photopea:latest
 }
 
 create_cyberchef() {
   # https://github.com/mpepping/docker-cyberchef
   set_color && echo
   echo -e "\t\tCreating CyberChef"
-  docker run -d --name CyberChef --hostname cyberchef --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p "$CYBERCHEFPORT":8000 mpepping/cyberchef:latest
+  docker run -d --name CyberChef --hostname cyberchef --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p $ALLOWEDIPS:"$CYBERCHEFPORT":8000 mpepping/cyberchef:latest
 }
 
 create_regex101() {
   # https://github.com/LoopSun/regex101-docker
   set_color && echo
   echo -e "\t\tCreating Regex101"
-  docker run -d --name Regex101 --hostname regex101 --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p "$REGEX101PORT":9090 loopsun/regex101
+  docker run -d --name Regex101 --hostname regex101 --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p $ALLOWEDIPS:"$REGEX101PORT":9090 loopsun/regex101
 }
 
 create_ittools() {
   # https://it-tools.tech/docker-run-to-docker-compose-converter
   set_color && echo
   echo -e "\t\tCreating IT Tools"
-  docker run -d --name IT-Tools --hostname it-tools --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p $ITTOOLSPORT:80 corentinth/it-tools:latest
+  docker run -d --name IT-Tools --hostname it-tools --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p $ALLOWEDIPS:$ITTOOLSPORT:80 corentinth/it-tools:latest
 }
 
 create_codimd() {
@@ -450,35 +451,35 @@ create_codimd() {
   
   echo
   echo -e "\t\tCreating Codimd"
-  docker run -d --name Codimd --hostname codimd --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p $CODIMDPORT:3000 -e CMD_DB_URL=postgres://codimd:${ACTPASSWORD}@Codimd-DB/codimd -e CMD_USECDN=false -v "${DOCPATH}"/codimd/uploads:/home/hackmd/app/public/uploads hackmdio/hackmd:2.5.4
+  docker run -d --name Codimd --hostname codimd --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p $ALLOWEDIPS:$CODIMDPORT:3000 -e CMD_DB_URL=postgres://codimd:${ACTPASSWORD}@Codimd-DB/codimd -e CMD_USECDN=false -v "${DOCPATH}"/codimd/uploads:/home/hackmd/app/public/uploads hackmdio/hackmd:2.5.4
 }
 
 create_n8n() {
   # https://github.com/n8n-io/n8n
   set_color && echo
   echo -e "\t\tCreating N8N"
-  docker run -d --name N8N --hostname n8n --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p $N8NPORT:5678 -e N8N_BASIC_AUTH_ACTIVE=true -e N8N_SECURE_COOKIE=false -e N8N_BASIC_AUTH_USER=${LOGINUSER}@n8n.local -e N8N_BASIC_AUTH_PASSWORD=${ACTPASSWORD} -v "${DOCPATH}"/n8n:/home/node/.n8n n8nio/n8n:latest
+  docker run -d --name N8N --hostname n8n --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p $ALLOWEDIPS:$N8NPORT:5678 -e N8N_BASIC_AUTH_ACTIVE=true -e N8N_SECURE_COOKIE=false -e N8N_BASIC_AUTH_USER=${LOGINUSER}@n8n.local -e N8N_BASIC_AUTH_PASSWORD=${ACTPASSWORD} -v "${DOCPATH}"/n8n:/home/node/.n8n n8nio/n8n:latest
 }
 
 create_gitlab() {
   # https://docs.gitlab.com/ee/install/docker/installation.html
   set_color && echo
   echo -e "\t\tCreating GitLab"
-  docker run -d --name GitLab --hostname gitlab --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p "$GITLABPORT":80 -v "${DOCPATH}"/gitlab/config:/etc/gitlab:rw -v "${DOCPATH}"/gitlab/logs:/var/log/gitlab:rw -v "${DOCPATH}"/gitlab/data:/var/opt/gitlab:rw gitlab/gitlab-ce:latest
+  docker run -d --name GitLab --hostname gitlab --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p $ALLOWEDIPS:"$GITLABPORT":80 -v "${DOCPATH}"/gitlab/config:/etc/gitlab:rw -v "${DOCPATH}"/gitlab/logs:/var/log/gitlab:rw -v "${DOCPATH}"/gitlab/data:/var/opt/gitlab:rw gitlab/gitlab-ce:latest
 }
 
 create_etherpad() {
   # https://github.com/ether/etherpad-lite
   set_color && echo
   echo -e "\t\tCreating Etherpad"
-  docker run -d --name EtherPad --hostname etherpad --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB --pids-limit 2048 -e TZ=America/New_York -e NODE_VERSION=22.8.0 -e YARN_VERSION=1.22.22 -e TIMEZONE= -e NODE_ENV=production -e ETHERPAD_PRODUCTION=1 -p "$ETHERPADPORT":9001 etherpad/etherpad
+  docker run -d --name EtherPad --hostname etherpad --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB --pids-limit 2048 -e TZ=America/New_York -e NODE_VERSION=22.8.0 -e YARN_VERSION=1.22.22 -e TIMEZONE= -e NODE_ENV=production -e ETHERPAD_PRODUCTION=1 -p $ALLOWEDIPS:"$ETHERPADPORT":9001 etherpad/etherpad
 }
 
 create_remmina() {
   # https://github.com/linuxserver/docker-remmina
   set_color && echo
   echo -e "\t\tCreating Remmina"
-  docker run -d --name Remmina --hostname remmina -e PUID=1000 -e PGID=1000 -e TZ=Etc/UTC -p $REMMINAPORT:3000 -p 3001:3001 -v "${DOCPATH}"/remmina/config:/config --restart unless-stopped lscr.io/linuxserver/remmina:latest
+  docker run -d --name Remmina --hostname remmina -e PUID=1000 -e PGID=1000 -e TZ=Etc/UTC -p $ALLOWEDIPS:$REMMINAPORT:3000 -p $ALLOWEDIPS:3001:3001 -v "${DOCPATH}"/remmina/config:/config --restart unless-stopped lscr.io/linuxserver/remmina:latest
 }
 
 create_b_b_shuffle() {
@@ -489,7 +490,7 @@ create_b_b_shuffle() {
   #cp Images/Orange-Background.png "${DOCPATH}"/B-B-Shuffle/App/img/page-back.png
   git clone https://github.com/p3hndrx/B-B-Shuffle.git "${DOCPATH}"/B-B-Shuffle
   docker build -t b-b-shuffle "${DOCPATH}"/B-B-Shuffle/
-  docker run -d --name B-B-Shuffle --hostname b-b-shuffle --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p "${BBSHUFFLEPORT}":80 -v "${DOCPATH}"/B-B-Shuffle/html:/var/www/html:rw b-b-shuffle
+  docker run -d --name B-B-Shuffle --hostname b-b-shuffle --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p $ALLOWEDIPS:"${BBSHUFFLEPORT}":80 -v "${DOCPATH}"/B-B-Shuffle/html:/var/www/html:rw b-b-shuffle
 }
 
 create_stego-toolkit() {
@@ -519,7 +520,7 @@ create_sift_remnux() {
     docker build -t sift-remnux -f "${DOCPATH}"/siftnux-docker/Dockerfile "${DOCPATH}"/siftnux-docker
 
     # Run the container
-    docker run -d --name SIFT-REMnux --hostname sift-remnux --restart ${DOCKERSTART} -p 33:22 -v "${DOCPATH}"/sift-remnux:/root sift-remnux
+    docker run -d --name SIFT-REMnux --hostname sift-remnux --restart ${DOCKERSTART} -p $ALLOWEDIPS:33:22 -v "${DOCPATH}"/sift-remnux:/root sift-remnux
 
   elif [[ $build_pull_skip =~ ^[Pp][Uu][Ll][Ll]$ || $build_pull_skip =~ ^[Pp]$ ]]; then
     # Pull the image
@@ -527,7 +528,7 @@ create_sift_remnux() {
     docker pull digitalsleuth/sift-remnux:latest
 
     # Run the container
-    docker run -d --name SIFT-REMnux --hostname sift-remnux --restart ${DOCKERSTART} -p 33:22 -v "${DOCPATH}"/sift-remnux:/root digitalsleuth/sift-remnux:latest
+    docker run -d --name SIFT-REMnux --hostname sift-remnux --restart ${DOCKERSTART} -p $ALLOWEDIPS:33:22 -v "${DOCPATH}"/sift-remnux:/root digitalsleuth/sift-remnux:latest
 
   else
     echo "Skipping SIFT-REMnux setup."
@@ -537,7 +538,7 @@ create_sift_remnux() {
 create_vscode() {
   set_color && echo
   echo -e "\t\tCreating VSCode"
-  docker run -d --name VSCode --hostname vscode --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p $VSCODEPORT:8443 -e PUID=1000 -e PGID=1000 -e TZ=Etc/UTC -e PASSWORD=${ACTPASSWORD} -e HASHED_PASSWORD= -e SUDO_PASSWORD=${ACTPASSWORD} -e SUDO_PASSWORD_HASH= -e DEFAULT_WORKSPACE=/config/workspace -v "${DOCPATH}"/vscode:/config lscr.io/linuxserver/code-server:latest
+  docker run -d --name VSCode --hostname vscode --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p $ALLOWEDIPS:$VSCODEPORT:8443 -e PUID=1000 -e PGID=1000 -e TZ=Etc/UTC -e PASSWORD=${ACTPASSWORD} -e HASHED_PASSWORD= -e SUDO_PASSWORD=${ACTPASSWORD} -e SUDO_PASSWORD_HASH= -e DEFAULT_WORKSPACE=/config/workspace -v "${DOCPATH}"/vscode:/config lscr.io/linuxserver/code-server:latest
 
   # Install extensions
   echo "Installing VSCode Extensions..."
