@@ -78,6 +78,7 @@ N8NPORT=1014            # N8N
 GITLABPORT=1015         # GitLab
 BBSHUFFLEPORT=1016      # B-B-Shuffle
 VSCODEPORT=1017         # VSCode
+PHOTOPEAPORT=1018           # Photopea
 
 check_root_access() {
   set_color
@@ -150,6 +151,7 @@ print_tools_to_install() {
   echo -e "\t Ollama LLM\t<-  $OLLAMAPORT ->\tOffline LLM"
   echo -e "\t Ollama OCR\t<-  $OCRPORT ->\tOCR For Images to Text and/or Translation"
   echo -e "\t Draw.io\t<-  $DRAWIOPORT ->\tDiagramming Tool"
+  echo -e "\t Photopea\t<-  $PHOTOPEA ->\tOnline Photo Editor"
   echo -e "\t CyberChef\t<-  $CYBERCHEFPORT ->\tCyberChef"
   echo -e "\t Regex101\t<-  $REGEX101PORT ->\tRegex Testing"
   echo -e "\t IT Tools\t<-  $ITTOOLSPORT ->\tVarious IT Tools"
@@ -265,7 +267,7 @@ dashboard_SED() {
   echo "                         Editing Dashboard Configuration Files..."
   echo "--------------------------------------------------------------------------------------"
   echo "                 Fixing in the Homer Config via SED..."
-  sed -i "s/\$HOSTIP/$HOSTIP/g; s/\$HOMERPORT/$HOMERPORT/g; s/\$VAULTPORT/$VAULTPORT/g; s/\$PORTAINERPORT/$PORTAINERPORT/g; s/\$PLANKAPORT/$PLANKAPORT/g; s/\$BOOKSTACKPORT/$BOOKSTACKPORT/g; s/\$PAPERLESSPORT/$PAPERLESSPORT/g; s/\$OLLAMAPORT/$OLLAMAPORT/g; s/\$OCRPORT/$OCRPORT/g; s/\$DRAWIOPORT/$DRAWIOPORT/g; s/\$CYBERCHEFPORT/$CYBERCHEFPORT/g; s/\$REGEX101PORT/$REGEX101PORT/g; s/\$ITTOOLSPORT/$ITTOOLSPORT/g; s/\$CODIMDPORT/$CODIMDPORT/g; s/\$ETHERPADPORT/$ETHERPADPORT/g; s/\$GITLABPORT/$GITLABPORT/g; s/\$N8NPORT/$N8NPORT/g; s/\$DFIRIRISPORT/$DFIRIRISPORT/g; s/\$BBSHUFFLEPORT/$BBSHUFFLEPORT/g; s/\$VSCODEPORT/$VSCODEPORT/g" "${DOCPATH}"/homer/config.yml
+  sed -i "s/\$HOSTIP/$HOSTIP/g; s/\$HOMERPORT/$HOMERPORT/g; s/\$VAULTPORT/$VAULTPORT/g; s/\$PORTAINERPORT/$PORTAINERPORT/g; s/\$PLANKAPORT/$PLANKAPORT/g; s/\$BOOKSTACKPORT/$BOOKSTACKPORT/g; s/\$PAPERLESSPORT/$PAPERLESSPORT/g; s/\$OLLAMAPORT/$OLLAMAPORT/g; s/\$OCRPORT/$OCRPORT/g; s/\$DRAWIOPORT/$DRAWIOPORT/g; s/\$CYBERCHEFPORT/$CYBERCHEFPORT/g; s/\$REGEX101PORT/$REGEX101PORT/g; s/\$ITTOOLSPORT/$ITTOOLSPORT/g; s/\$CODIMDPORT/$CODIMDPORT/g; s/\$ETHERPADPORT/$ETHERPADPORT/g; s/\$GITLABPORT/$GITLABPORT/g; s/\$N8NPORT/$N8NPORT/g; s/\$DFIRIRISPORT/$DFIRIRISPORT/g; s/\$BBSHUFFLEPORT/$BBSHUFFLEPORT/g; s/\$VSCODEPORT/$VSCODEPORT/g; s/\$PHOTOPEA/$PHOTOPEAPORT/g" "${DOCPATH}"/homer/config.yml
 
 ## Dashboard-icons is a git repo that contains a lot of icons for the dashboard
 #  git clone https://github.com/walkxcode/dashboard-icons.git
@@ -287,15 +289,10 @@ set_color && echo
   echo "                  Pulling / Creating Docker Containers for Databases..."
   echo "--------------------------------------------------------------------------------------"
 
-
-DOCKER_OPTIONS
-
-
 create_bookstack() {
   set_color && echo
   echo -e "\t\tCreating MySQL - BookStack-DB"
   docker run -d --name BookStack-DB --hostname bookstack-db --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -e PUID=1000 -e PGID=1000 -e MYSQL_ROOT_PASSWORD=bookstackrootpassword -e TZ=America/Toronto -v "${DOCPATH}"/bookstack/db_data:/config -e MYSQL_DATABASE=bookstackapp -e MYSQL_USER=bookstack -e MYSQL_PASSWORD=bookstackpassword lscr.io/linuxserver/mariadb  #  > /dev/null 2>&1
-
 
   echo
   echo -e "\t\tCreating Bookstack"
@@ -407,21 +404,27 @@ create_drawio() {
   # https://github.com/jgraph/drawio
   set_color && echo
   echo -e "\t\tCreating Draw.io"
-  docker run -d --name Draw.io --hostname drawio --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p $DRAWIOPORT:8080   jgraph/drawio:latest
+  docker run -d --name Draw.io --hostname drawio --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p $DRAWIOPORT:8080 jgraph/drawio:latest
 }
+
+create_photopea() {
+  # 
+  set_color && echo
+  echo -e "\t\tCreating Photopea"
+  docker run -d --name Photopea --hostname photopea --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p $PHOTOPEAPORT:80 photopea/photopea
 
 create_cyberchef() {
   # https://github.com/mpepping/docker-cyberchef
   set_color && echo
   echo -e "\t\tCreating CyberChef"
-  docker run -d --name CyberChef --hostname cyberchef --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p "$CYBERCHEFPORT":8000   mpepping/cyberchef:latest
+  docker run -d --name CyberChef --hostname cyberchef --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p "$CYBERCHEFPORT":8000 mpepping/cyberchef:latest
 }
 
 create_regex101() {
   # https://github.com/LoopSun/regex101-docker
   set_color && echo
   echo -e "\t\tCreating Regex101"
-  docker run -d --name Regex101 --hostname regex101 --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p "$REGEX101PORT":9090   loopsun/regex101
+  docker run -d --name Regex101 --hostname regex101 --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p "$REGEX101PORT":9090 loopsun/regex101
 }
 
 create_ittools() {
@@ -436,18 +439,18 @@ create_codimd() {
   # https://github.com/hackmdio/codimd
   set_color && echo
   echo -e "\t\tCreating Codimd DB"
-  docker run -d --name Codimd-DB --hostname codimd-db --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -v "${DOCPATH}"/codimd/db-data:/var/lib/postgresql/data:rw -e POSTGRES_DB=codimd -e POSTGRES_USER=codimd -e POSTGRES_PASSWORD=${ACTPASSWORD}   postgres:14-alpine 
+  docker run -d --name Codimd-DB --hostname codimd-db --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -v "${DOCPATH}"/codimd/db-data:/var/lib/postgresql/data:rw -e POSTGRES_DB=codimd -e POSTGRES_USER=codimd -e POSTGRES_PASSWORD=${ACTPASSWORD} postgres:14-alpine 
   
   echo
   echo -e "\t\tCreating Codimd"
-  docker run -d --name Codimd --hostname codimd --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p $CODIMDPORT:3000 -e CMD_DB_URL=postgres://codimd:${ACTPASSWORD}@Codimd-DB/codimd -e CMD_USECDN=false -v "${DOCPATH}"/codimd/uploads:/home/hackmd/app/public/uploads   hackmdio/hackmd:2.5.4
+  docker run -d --name Codimd --hostname codimd --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p $CODIMDPORT:3000 -e CMD_DB_URL=postgres://codimd:${ACTPASSWORD}@Codimd-DB/codimd -e CMD_USECDN=false -v "${DOCPATH}"/codimd/uploads:/home/hackmd/app/public/uploads hackmdio/hackmd:2.5.4
 }
 
 create_n8n() {
   # https://github.com/n8n-io/n8n
   set_color && echo
   echo -e "\t\tCreating N8N"
-  docker run -d --name N8N --hostname n8n --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p $N8NPORT:5678 -e N8N_BASIC_AUTH_ACTIVE=true -e N8N_SECURE_COOKIE=false -e N8N_BASIC_AUTH_USER=${LOGINUSER}@n8n.local -e N8N_BASIC_AUTH_PASSWORD=${ACTPASSWORD} -v "${DOCPATH}"/n8n:/home/node/.n8n   n8nio/n8n:latest
+  docker run -d --name N8N --hostname n8n --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p $N8NPORT:5678 -e N8N_BASIC_AUTH_ACTIVE=true -e N8N_SECURE_COOKIE=false -e N8N_BASIC_AUTH_USER=${LOGINUSER}@n8n.local -e N8N_BASIC_AUTH_PASSWORD=${ACTPASSWORD} -v "${DOCPATH}"/n8n:/home/node/.n8n n8nio/n8n:latest
 }
 
 create_gitlab() {

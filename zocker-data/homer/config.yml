@@ -134,6 +134,10 @@ services:
         logo: "assets/tools/draw.png"
         url: "http://$HOSTIP:$DRAWIOPORT"
 
+      - name: "PhotoPea"
+        logo: "assets/tools/photopea.png"
+        url: "http://$HOSTIP:$PHOTOPEAPORT"
+
   - name: "Cyber Tabletop"
     items:
       - name: "B-B-Shuffle"
