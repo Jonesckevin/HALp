@@ -137,6 +137,10 @@ services:
       - name: "PhotoPea"
         logo: "assets/tools/photopea.png"
         url: "http://$HOSTIP:$PHOTOPEAPORT"
+      
+      - name: "Remmina"
+        logo: "assets/tools/Remmina.png"
+        url: "http://$HOSTIP:$REMMINAPORT"
 
   - name: "Cyber Tabletop"
     items:

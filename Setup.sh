@@ -78,7 +78,10 @@ N8NPORT=1014            # N8N
 GITLABPORT=1015         # GitLab
 BBSHUFFLEPORT=1016      # B-B-Shuffle
 VSCODEPORT=1017         # VSCode
-PHOTOPEAPORT=1018           # Photopea
+PHOTOPEAPORT=1018       # Photopea
+#FITCRACKPORT=1019       # Fitcrack
+STEGOTOOLKITPORT=1020   # StegoToolkit
+REMMINAPORT=1021        # Remmina
 
 check_root_access() {
   set_color
@@ -151,7 +154,7 @@ print_tools_to_install() {
   echo -e "\t Ollama LLM\t<-  $OLLAMAPORT ->\tOffline LLM"
   echo -e "\t Ollama OCR\t<-  $OCRPORT ->\tOCR For Images to Text and/or Translation"
   echo -e "\t Draw.io\t<-  $DRAWIOPORT ->\tDiagramming Tool"
-  echo -e "\t Photopea\t<-  $PHOTOPEA ->\tOnline Photo Editor"
+  echo -e "\t Photopea\t<-  $PHOTOPEAPORT ->\tOnline Photo Editor"
   echo -e "\t CyberChef\t<-  $CYBERCHEFPORT ->\tCyberChef"
   echo -e "\t Regex101\t<-  $REGEX101PORT ->\tRegex Testing"
   echo -e "\t IT Tools\t<-  $ITTOOLSPORT ->\tVarious IT Tools"
@@ -161,6 +164,9 @@ print_tools_to_install() {
   echo -e "\t GitLab\t\t<-  $GITLABPORT ->\tOffline and OpenSource Git"
   echo -e "\t B-B-Shuffle\t<-  $BBSHUFFLEPORT ->\tB-B-Shuffle"
   echo -e "\t VSCode\t\t<-  $VSCODEPORT ->\tVSCode"
+  echo -e "\t StegoToolkit\t<-  $STEGOTOOLKITPORT ->\tStegoToolkit"
+  echo -e "\t Remmina\t<-  $REMMINAPORT ->\tRemote Desktop"
+
 }
 create_prerequisites() {
   set_color
@@ -253,7 +259,7 @@ folder_variables_check() {
           set_color && echo "Creating ""${DOCPATH}"""
           set_color && mkdir -p "${DOCPATH}"/ && echo "mkdir -p ""${DOCPATH}""/" || echo "Failed to create ""${DOCPATH}""/"
           set_color && chmod -R 777 "${DOCPATH}"/ && echo "chmod -R 777 ""${DOCPATH}""/"
-          set_color && echo "ownership of './zocker-data/' retained as 1000:1000"
+          set_color && echo "ownership of '"${DOCPATH}"' retained as 1000:1000"
           set_color && install -v -g 1000 -o 1000 -d "${DOCPATH}"/ > /dev/null 2>&1
           set_color && echo
       fi
@@ -267,7 +273,7 @@ dashboard_SED() {
   echo "                         Editing Dashboard Configuration Files..."
   echo "--------------------------------------------------------------------------------------"
   echo "                 Fixing in the Homer Config via SED..."
-  sed -i "s/\$HOSTIP/$HOSTIP/g; s/\$HOMERPORT/$HOMERPORT/g; s/\$VAULTPORT/$VAULTPORT/g; s/\$PORTAINERPORT/$PORTAINERPORT/g; s/\$PLANKAPORT/$PLANKAPORT/g; s/\$BOOKSTACKPORT/$BOOKSTACKPORT/g; s/\$PAPERLESSPORT/$PAPERLESSPORT/g; s/\$OLLAMAPORT/$OLLAMAPORT/g; s/\$OCRPORT/$OCRPORT/g; s/\$DRAWIOPORT/$DRAWIOPORT/g; s/\$CYBERCHEFPORT/$CYBERCHEFPORT/g; s/\$REGEX101PORT/$REGEX101PORT/g; s/\$ITTOOLSPORT/$ITTOOLSPORT/g; s/\$CODIMDPORT/$CODIMDPORT/g; s/\$ETHERPADPORT/$ETHERPADPORT/g; s/\$GITLABPORT/$GITLABPORT/g; s/\$N8NPORT/$N8NPORT/g; s/\$DFIRIRISPORT/$DFIRIRISPORT/g; s/\$BBSHUFFLEPORT/$BBSHUFFLEPORT/g; s/\$VSCODEPORT/$VSCODEPORT/g; s/\$PHOTOPEA/$PHOTOPEAPORT/g" "${DOCPATH}"/homer/config.yml
+  sed -i "s/\$HOSTIP/$HOSTIP/g; s/\$HOMERPORT/$HOMERPORT/g; s/\$VAULTPORT/$VAULTPORT/g; s/\$PORTAINERPORT/$PORTAINERPORT/g; s/\$PLANKAPORT/$PLANKAPORT/g; s/\$BOOKSTACKPORT/$BOOKSTACKPORT/g; s/\$PAPERLESSPORT/$PAPERLESSPORT/g; s/\$OLLAMAPORT/$OLLAMAPORT/g; s/\$OCRPORT/$OCRPORT/g; s/\$DRAWIOPORT/$DRAWIOPORT/g; s/\$CYBERCHEFPORT/$CYBERCHEFPORT/g; s/\$REGEX101PORT/$REGEX101PORT/g; s/\$ITTOOLSPORT/$ITTOOLSPORT/g; s/\$CODIMDPORT/$CODIMDPORT/g; s/\$ETHERPADPORT/$ETHERPADPORT/g; s/\$GITLABPORT/$GITLABPORT/g; s/\$N8NPORT/$N8NPORT/g; s/\$DFIRIRISPORT/$DFIRIRISPORT/g; s/\$BBSHUFFLEPORT/$BBSHUFFLEPORT/g; s/\$VSCODEPORT/$VSCODEPORT/g; s/\$PHOTOPEA/$PHOTOPEAPORT/g; s/\$STEGOTOOLKITPORT/$STEGOTOOLKITPORT/g; s/\$REMMINAPORT/$REMMINAPORT/g" "${DOCPATH}"/homer/config.yml
 
 ## Dashboard-icons is a git repo that contains a lot of icons for the dashboard
 #  git clone https://github.com/walkxcode/dashboard-icons.git
@@ -411,7 +417,8 @@ create_photopea() {
   # 
   set_color && echo
   echo -e "\t\tCreating Photopea"
-  docker run -d --name Photopea --hostname photopea --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p $PHOTOPEAPORT:80 photopea/photopea
+  docker run -d --name Photopea --hostname photopea --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p $PHOTOPEAPORT:8887 eorendel/photopea:latest
+}
 
 create_cyberchef() {
   # https://github.com/mpepping/docker-cyberchef
@@ -467,6 +474,13 @@ create_etherpad() {
   docker run -d --name EtherPad --hostname etherpad --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB --pids-limit 2048 -e TZ=America/New_York -e NODE_VERSION=22.8.0 -e YARN_VERSION=1.22.22 -e TIMEZONE= -e NODE_ENV=production -e ETHERPAD_PRODUCTION=1 -p "$ETHERPADPORT":9001 etherpad/etherpad
 }
 
+create_remmina() {
+  # https://github.com/linuxserver/docker-remmina
+  set_color && echo
+  echo -e "\t\tCreating Remmina"
+  docker run -d --name Remmina --hostname remmina -e PUID=1000 -e PGID=1000 -e TZ=Etc/UTC -p $REMMINAPORT:3000 -p 3001:3001 -v ./remmina/config:/config --restart unless-stopped lscr.io/linuxserver/remmina:latest
+}
+
 create_b_b_shuffle() {
   # https://github.com/p3hndrx/B-B-Shuffle
   set_color && echo
@@ -474,8 +488,22 @@ create_b_b_shuffle() {
   ## If you want to change the background image, you can replace the Orange-Background.png with your own image
   #cp Images/Orange-Background.png "${DOCPATH}"/B-B-Shuffle/App/img/page-back.png
   git clone https://github.com/p3hndrx/B-B-Shuffle.git "${DOCPATH}"/B-B-Shuffle
-  docker build -t b-b-shuffle ./zocker-data/B-B-Shuffle/
+  docker build -t b-b-shuffle "${DOCPATH}"/B-B-Shuffle/
   docker run -d --name B-B-Shuffle --hostname b-b-shuffle --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p "${BBSHUFFLEPORT}":80 -v "${DOCPATH}"/B-B-Shuffle/html:/var/www/html:rw b-b-shuffle
+}
+
+create_stego-toolkit() {
+  # https://github.com/DominicBreuker/stego-toolkit
+  set_color && echo
+  echo -e "\t\tCreating Stego-Toolkit"
+  git clone https://github.com/DominicBreuker/stego-toolkit.git "${DOCPATH}"/stego-toolkit
+  docker pull dominicbreuker/stego-toolkit:latest
+  #docker build -t stego-toolkit "${DOCPATH}"/stego-toolkit/
+  #docker run -d --name Stego-Toolkit --hostname stego-toolkit --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -v "${DOCPATH}"/stego-toolkit:/root/stego-toolkit:rw stego-toolkit
+  #docker run -it --rm -p 127.0.0.1:22:22 dominicbreuker/stego-toolkit /bin/bash -c "start_ssh.sh && ssh -X -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no root@localhost"
+  #docker run -it --rm -p 127.0.0.1:6901:6901 dominicbreuker/stego-toolkit /bin/bash -c "start_vnc.sh && vncserver :1 -geometry 1280x800 -depth 24 && tail -f /root/.vnc/*:1.log"
+  #docker run -d --name Stego-Toolkit --hostname stego-toolkit --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p 6901:6901 -p 22:22 dominicbreuker/stego-toolkit
+  # in browser, connect with: http://localhost:6901/?password=<password_from_start_vnc>
 }
 
 create_sift_remnux() {
@@ -488,10 +516,10 @@ create_sift_remnux() {
   if [[ $build_pull_skip =~ ^[Bb][Uu][Ii][Ll][Dd]$ || $build_pull_skip =~ ^[Bb]$ ]]; then
     # Build the image
     echo "Building the image..."
-    docker build -t sift-remnux -f ./zocker-data/siftnux-docker/Dockerfile ./zocker-data/siftnux-docker
+    docker build -t sift-remnux -f "${DOCPATH}"/siftnux-docker/Dockerfile "${DOCPATH}"/siftnux-docker
 
     # Run the container
-    docker run -d --name SIFT-REMnux --hostname sift-remnux --restart ${DOCKERSTART} -p 33:22 -v "${DOCPATH}"/zocker-data/sift-remnux:/root sift-remnux
+    docker run -d --name SIFT-REMnux --hostname sift-remnux --restart ${DOCKERSTART} -p 33:22 -v "${DOCPATH}"/sift-remnux:/root sift-remnux
 
   elif [[ $build_pull_skip =~ ^[Pp][Uu][Ll][Ll]$ || $build_pull_skip =~ ^[Pp]$ ]]; then
     # Pull the image
@@ -499,7 +527,7 @@ create_sift_remnux() {
     docker pull digitalsleuth/sift-remnux:latest
 
     # Run the container
-    docker run -d --name SIFT-REMnux --hostname sift-remnux --restart ${DOCKERSTART} -p 33:22 -v "${DOCPATH}"/zocker-data/sift-remnux:/root digitalsleuth/sift-remnux:latest
+    docker run -d --name SIFT-REMnux --hostname sift-remnux --restart ${DOCKERSTART} -p 33:22 -v "${DOCPATH}"/sift-remnux:/root digitalsleuth/sift-remnux:latest
 
   else
     echo "Skipping SIFT-REMnux setup."
@@ -531,14 +559,14 @@ create_vscode() {
 
 install_backup() {
   set_color && echo
-  # Create cron job to backup zocker-data folder
+  # Create cron job to backup "${DOCPATH}" folder
   echo "--------------------------------------------------------------------------------------"
   echo "                         Creating Backup Cron Job..."
   echo "--------------------------------------------------------------------------------------"
   echo "0 0 * * * tar -czvf /root/$(basename "${DOCPATH}")-backup.tar.gz -C ${DOCPATH} ." | crontab -
   echo "Cron job created."
 
-  # Shutdown all containers and backup the zocker-data folder
+  # Shutdown all containers and backup the "${DOCPATH}" folder
   echo "--------------------------------------------------------------------------------------"
   echo "                         Shutting down all containers..."
   echo "--------------------------------------------------------------------------------------"
@@ -546,9 +574,9 @@ install_backup() {
   echo "All containers stopped."
   echo
   echo "--------------------------------------------------------------------------------------"
-   # Backup the zocker-data folder as root
+   # Backup the "${DOCPATH}" folder as root
   echo "--------------------------------------------------------------------------------------"
-  echo "                         Backing up zocker-data folder..."
+  echo "                         Backing up "${DOCPATH}" folder..."
   echo "--------------------------------------------------------------------------------------"
   tar -czvf /root/zocker-data-backup.tar.gz -C "${DOCPATH}" .
   echo "Backup completed: /root/zocker-data-backup.tar.gz"
@@ -611,6 +639,7 @@ default_logins_summary() {
   echo -e " Codimd         | $HOSTIP:$CODIMDPORT       | N/A                                                         | N/A"
   echo -e " Draw.io        | $HOSTIP:$DRAWIOPORT       | N/A                                                         | N/A"
   echo -e " CyberChef      | $HOSTIP:$CYBERCHEFPORT       | N/A                                                         | N/A"
+  echo -e " Photopea       | $HOSTIP:$PHOTOPEAPORT       | N/A                                                         | N/A"
   echo -e " Regex101       | $HOSTIP:$REGEX101PORT       | N/A                                                         | N/A"
   echo -e " IT Tools       | $HOSTIP:$ITTOOLSPORT       | N/A                                                         | N/A"
   echo -e " OpenWebUI Admin| $HOSTIP:$OLLAMAPORT       | <You can create your own> (First one gets admin)            | <You can create your own>"
@@ -618,6 +647,8 @@ default_logins_summary() {
   echo -e " Ollama-OCR     | $HOSTIP:$OCRPORT       | N/A                                                         | N/A"
   echo -e " B-B-Shuffle    | $HOSTIP:$BBSHUFFLEPORT       | N/A                                                         | N/A"
   echo -e " VSCode         | $HOSTIP:$VSCODEPORT       | N/A                                                         | ${ACTPASSWORD}"
+  echo -e " Stego-Toolkit  | N/A                       | N/A                                                         | N/A"
+  echo -e " Remmina        | $HOSTIP:$REMMINAPORT       | N/A                                                         | N/A"
   echo -e "------------------------------------------------------------------------------------------"
 }
 
@@ -667,7 +698,6 @@ dashboard_SED            ## Replaces IP and Ports in Homer Config
 create_portainer         ## Creating Portainer...
 create_homer             ## Installing Dashboard...
 create_vaultwarden       ## Installing Vaultwarden...
-create_portainer         ## Installing Portainer...
 create_dfir_iris         ## Installing DFIR-IRIS...
 create_bookstack         ## Installing Wiki...
 create_planka            ## Installing KanBan...
@@ -682,10 +712,13 @@ create_n8n               ## Installing N8N...
 create_gitlab            ## Installing GitLab...
 create_drawio            ## Installing Drawio...
 create_cyberchef         ## Installing CyberChef...
+create_photopea          ## Installing Photopea...
+create_remmina
 create_regex101          ## Installing Regex101...
 create_etherpad          ## Installing Etherpad...
 create_b_b_shuffle       ## Installing B-B-Shuffle...
 create_vscode            ## Installing VSCode...
+create_stego-toolkit     ## Installing Stego-Toolkit...
 create_sift_remnux       ## Installing SIFT-REMnux...
 
 postcreation_changes     ## Post Creation Changes such as replace images or change colors
