@@ -7,16 +7,14 @@ exec > >(tee -a /dev/null) 2>&1
 
 log_success() {
   tput setaf 2
-  echo "$1"
-  tput sgr0
   echo "$(date '+%Y-%m-%d %H:%M:%S') [SUCCESS] $1" >> "$LOGFILE"
+  tput sgr0
 }
 
 log_error() {
   tput setaf 1
-  echo "$1"
-  tput sgr0
   echo "$(date '+%Y-%m-%d %H:%M:%S') [ERROR] $1" >> "$LOGFILE"
+  tput sgr0
 }
 
 create_docker_commands() {
