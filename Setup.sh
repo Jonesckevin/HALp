@@ -2,51 +2,58 @@
 
 # shellcheck disable=SC1091
 
+LOGFILE="./HALP_Setup_Log.log"
+exec > >(tee -a /dev/null) 2>&1
+
+log_success() {
+  tput setaf 2
+  echo "$1"
+  tput sgr0
+  echo "$(date '+%Y-%m-%d %H:%M:%S') [SUCCESS] $1" >> "$LOGFILE"
+}
+
+log_error() {
+  tput setaf 1
+  echo "$1"
+  tput sgr0
+  echo "$(date '+%Y-%m-%d %H:%M:%S') [ERROR] $1" >> "$LOGFILE"
+}
+
 create_docker_commands() {
   # Create executables for starting all Docker containers
   echo '#!/bin/bash' | sudo tee /usr/local/bin/dockerstart
   echo "sudo docker start \$(docker ps -a --format \"{{.Names}}\" | tail -n +2)" | sudo tee -a /usr/local/bin/dockerstart
-  sudo chmod +x /usr/local/bin/dockerstart
+  sudo chmod +x /usr/local/bin/dockerstart && log_success "dockerstart command created successfully" || log_error "Failed to create dockerstart command"
   # Create executables for stopping all Docker containers
   echo '#!/bin/bash' | sudo tee /usr/local/bin/dockerstop
   echo "sudo docker stop \$(docker ps -a --format \"{{.Names}}\" | tail -n +2)" | sudo tee -a /usr/local/bin/dockerstop
-  sudo chmod +x /usr/local/bin/dockerstop
+  sudo chmod +x /usr/local/bin/dockerstop && log_success "dockerstop command created successfully" || log_error "Failed to create dockerstop command"
   # Create executables for removing all Docker containers
   echo '#!/bin/bash' | sudo tee /usr/local/bin/dockerrm
   echo "sudo docker rm \$(docker ps -a --format \"{{.Names}}\" | tail -n +2)" | sudo tee -a /usr/local/bin/dockerrm
-  sudo chmod +x /usr/local/bin/dockerrm
+  sudo chmod +x /usr/local/bin/dockerrm && log_success "dockerrm command created successfully" || log_error "Failed to create dockerrm command"
   # Create executables for restarting all Docker containers
   echo '#!/bin/bash' | sudo tee /usr/local/bin/dockerrestart
   echo "sudo docker restart \$(docker ps -a --format \"{{.Names}}\" | tail -n +2)" | sudo tee -a /usr/local/bin/dockerrestart
-  sudo chmod +x /usr/local/bin/dockerrestart
+  sudo chmod +x /usr/local/bin/dockerrestart && log_success "dockerrestart command created successfully" || log_error "Failed to create dockerrestart command"
   # Create executables for listing all Docker containers
   echo '#!/bin/bash' | sudo tee /usr/local/bin/dockerpss
   printf 'sudo docker ps -a --format "table \t{{.Names}}\t{{.Status}}\t{{.Ports}}" | tail -n +2\n' | sudo tee -a /usr/local/bin/dockerpss
-  sudo chmod +x /usr/local/bin/dockerpss
+  sudo chmod +x /usr/local/bin/dockerpss && log_success "dockerpss command created successfully" || log_error "Failed to create dockerpss command"
 }
 create_docker_commands
 
 counter=2
 set_color() {
-    ((counter++))                          # Increment counter
-    [[ $counter -gt 7 ]] && counter=1      # Reset counter
-    [[ $counter -eq 4 ]] && ((counter++))  # Skip color 4 Blue (Looks bad on black bg)
-    tput setaf $counter
+  ((counter++))                          # Increment counter
+  [[ $counter -gt 7 ]] && counter=1      # Reset counter
+  [[ $counter -eq 4 ]] && ((counter++))  # Skip color 4 Blue (Looks bad on black bg)
+  tput setaf $counter
 }
 
-# Banner: https://www.patorjk.com/software/taag/
-echo
-echo -e "\t\t __  __  ______  __                "
-echo -e "\t\t/\ \/\ \/\  _  \/\ \               "
-echo -e "\t\t\ \ \_\ \ \ \L\ \ \ \      _____   "
-echo -e "\t\t \ \  _  \ \  __ \ \ \    /\ '__\`\\ "
-echo -e "\t\t  \\ \\ \\ \\ \\ \\ \\/\\ \\ \\ \\__ \\ \\ \\L\\ \\"
-echo -e "\t\t   \\ \\_\\ \\_\\ \\_\\ \\_\\ \\___\\ \\\\ \\ ,__/"
-echo -e "\t\t    \\/_/\\/_/\\/_/\\/_/\\/___/  \\ \\ \\/ "
-echo -e "\t\t                             \\ \\_\\ "
-echo -e "\t\t                              \\/_/ "
-echo
-echo
+apt insstall figlet lolcat -y
+
+figlet -f slant "HALp" | lolcat
 
 chmod -R 777 ./*
 
@@ -86,24 +93,23 @@ REMMINAPORT=1021        # Remmina
 
 check_root_access() {
   set_color
-  echo
   echo "--------------------------------------------------------------------------------------"
-  echo "                          CHECKING FOR ROOT ACCESS..."
+  figlet -f slant "Checking for Root Access" | lolcat
   echo "--------------------------------------------------------------------------------------"
   if [[ $EUID -ne 0 ]]; then
-    echo "This script must be run as root"
-    echo "Running as user: $(whoami)"
+    log_error "This script must be run as root"
+    log_error "Running as user: $(whoami)"
     exit 1
   else
-    echo "Running as user: $(whoami)"
-    echo "Moving Forward..."
+    log_success "Running as user: $(whoami)"
+    log_success "Moving Forward..."
   fi
 }
 
 check_system_resources() {
   set_color
   echo "--------------------------------------------------------------------------------------"
-  echo "                              CHECKING SYSTEM RESOURCES"
+  figlet -f slant "Checking System Resources" | lolcat
   echo "                     It's recommended to have 12 Cores and 16GB RAM"
   echo -e "\e[31m Install all tools, and AI Models; it's recommended to have more than 50GB of storage\e[0m"
   echo "--------------------------------------------------------------------------------------"
@@ -112,9 +118,9 @@ check_system_resources() {
     echo "Checking CPU Cores..."
     CORES=$(nproc)
     if [[ $CORES -lt 12 ]]; then
-      echo -e "    You have \e[31m$CORES CPU Cores\e[0m. It's recommended to have 8+ Cores."
+      log_error "You have $CORES CPU Cores. It's recommended to have 12 Cores."
     else
-      echo -e "    You have \e[31m$CORES CPU Cores\e[0m. Moving Forward..."
+      log_success "You have $CORES CPU Cores. Moving Forward..."
     fi
   }
   cpu_check
@@ -123,9 +129,9 @@ check_system_resources() {
     echo "Checking Memory..."
     MEMORY=$(grep MemTotal /proc/meminfo | awk '{print int($2 / 10000)}')
     if [[ $MEMORY -lt 1600 ]]; then
-      echo -e "    You have \e[31m$MEMORY MB of RAM\e[0m. It's recommended to have 16GB RAM."
+      log_error "You have $MEMORY MB of RAM. It's recommended to have 16GB RAM."
     else
-      echo -e "    You have \e[31m$MEMORY MB of RAM\e[0m. Moving Forward..."
+      log_success "You have $MEMORY MB of RAM. Moving Forward..."
     fi
   }
   mem_check
@@ -172,7 +178,11 @@ print_tools_to_install() {
 create_prerequisites() {
   set_color
   echo "--------------------------------------------------------------------------------------"
-  echo "                      UPDATES AND PREREQUISITES SETUP"
+  if command -v figlet &> /dev/null; then
+    figlet -f slant "UPDATES AND PREREQUISITES SETUP" | lolcat
+  else
+    echo "                      UPDATES AND PREREQUISITES SETUP"
+  fi
   echo "--------------------------------------------------------------------------------------"
   ## Set package manager based on the operating system
   ## This Option was choosen to reduce the overall footprint of the script by about 50 lines since it's practically the same script.
@@ -183,7 +193,7 @@ create_prerequisites() {
       package_manager="yum"
       package_manager_message="             Checking... CentOS Detected. YUM and such engaging..."
   else
-      echo "Unsupported operating system. Please make sure you are running Ubuntu or CentOS."
+      log_error "Unsupported operating system. Please make sure you are running Ubuntu or CentOS."
       exit 1
   fi
   echo
@@ -200,12 +210,12 @@ create_prerequisites() {
     echo "-----------------------------------------------------------------------------------------"
     echo
     # Update and install prerequisites using the package manager
-    $package_manager update -y
-    $package_manager upgrade -y
-    $package_manager install -y htop git curl net-tools open-vm-tools-desktop openssh-server ca-certificates gnupg lsb-release software-properties-common apt-transport-https openjdk-11-jdk
+    $package_manager update -y && log_success "System updated successfully" || log_error "System update failed"
+    $package_manager upgrade -y && log_success "System upgraded successfully" || log_error "System upgrade failed"
+    $package_manager install -y  figlet htop git curl net-tools open-vm-tools-desktop openssh-server ca-certificates gnupg lsb-release software-properties-common apt-transport-https openjdk-11-jdk && log_success "Prerequisites installed successfully" || log_error "Failed to install prerequisites"
 
     # Remove old docker if exists
-    $package_manager remove -y docker.io containerd runc docker-compose
+    $package_manager remove -y docker.io containerd runc docker-compose && log_success "Old Docker versions removed successfully" || log_error "Failed to remove old Docker versions"
 
     # Update repository with official docker
     install -m 0755 -d /etc/apt/keyrings
@@ -218,31 +228,28 @@ create_prerequisites() {
     fi
 
     # Update with new repository then install docker and dependencies
-    $package_manager update -y
-    $package_manager install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+    $package_manager update -y && log_success "Docker repository updated successfully" || log_error "Failed to update Docker repository"
+    $package_manager install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin && log_success "Docker installed successfully" || log_error "Failed to install Docker"
 
     # Configure docker to be used without requiring sudo
     groupadd docker
     usermod -aG docker "$SUDO_USER"
-    echo "Docker group added. Please relog to update groups or run 'exec sg docker newgrp' to initialize."
+    log_success "Docker group added. Please relog to update groups or run 'exec sg docker newgrp' to initialize."
     sudo systemctl set-default multi-user.target
-    echo "Configuration complete"
-    echo "Updates are complete. Moving forward..."
+    log_success "Configuration complete"
+    log_success "Updates are complete. Moving forward..."
     echo "------------------------------"
     echo
   else
     echo
-    echo "                                SKIPPING Prerequisites..."
+    log_success "SKIPPING Prerequisites..."
     echo
   fi
 }
 
 folder_variables_check() {
   set_color && echo
-  echo "--------------------------------------------------------------------------------------"
-  echo "                                 Data Folder Creation &&"
-  echo "                 (OPTIONAL)            VARIABLES"
-  echo "--------------------------------------------------------------------------------------"
+  figlet -f slant "Data Folder Creation & Variables" | lolcat
 
   if [[ -d "${DOCPATH}" ]]; then
     read -r -p "The folder ""${DOCPATH}"" already exists. Do you want to delete all of it? [y/N]: " remove_folder
@@ -250,21 +257,21 @@ folder_variables_check() {
       echo -e "\e[31mWARNING: You are about to delete all pre-made data in ${DOCPATH}. Are you sure? [y/N]: \e[0m"
       read -r confirm_delete
       if [[ ! $confirm_delete =~ ^[Yy]$ ]]; then
-        echo "Aborting deletion."
+        log_success "Aborting deletion."
       fi
       echo "Removing ""${DOCPATH}""..."
       rm -d -r "${DOCPATH}"
       echo "Checking for ""${DOCPATH}""..."
       if [[ ! -d "${DOCPATH}" ]]; then
-        echo "Folder ""${DOCPATH}"" was removed."
+        log_success "Folder ""${DOCPATH}"" was removed."
           set_color && echo "Creating ""${DOCPATH}"""
-          set_color && mkdir -p "${DOCPATH}"/ && echo "mkdir -p ""${DOCPATH}""/" || echo "Failed to create ""${DOCPATH}""/"
-          set_color && chmod -R 777 "${DOCPATH}"/ && echo "chmod -R 777 ""${DOCPATH}""/"
-          set_color && echo "ownership of '""${DOCPATH}""' retained as 1000:1000"
+          set_color && mkdir -p "${DOCPATH}"/ && log_success "mkdir -p ""${DOCPATH}""/" || log_error "Failed to create ""${DOCPATH}""/"
+          set_color && chmod -R 777 "${DOCPATH}"/ && log_success "chmod -R 777 ""${DOCPATH}""/"
+          set_color && log_success "ownership of '""${DOCPATH}""' retained as 1000:1000"
           set_color && install -v -g 1000 -o 1000 -d "${DOCPATH}"/ > /dev/null 2>&1
           set_color && echo
       fi
-      ls "${DOCPATH}" > /dev/null 2>&1 && echo "Folder ""${DOCPATH}"" exists." || echo "Folder ""${DOCPATH}"" does not exist."
+      ls "${DOCPATH}" > /dev/null 2>&1 && log_success "Folder ""${DOCPATH}"" exists." || log_error "Folder ""${DOCPATH}"" does not exist."
     fi
   fi
 }
@@ -274,7 +281,7 @@ dashboard_SED() {
   echo "                         Editing Dashboard Configuration Files..."
   echo "--------------------------------------------------------------------------------------"
   echo "                 Fixing in the Homer Config via SED..."
-  sed -i "s/\$HOSTIP/$HOSTIP/g; s/\$HOMERPORT/$HOMERPORT/g; s/\$VAULTPORT/$VAULTPORT/g; s/\$PORTAINERPORT/$PORTAINERPORT/g; s/\$PLANKAPORT/$PLANKAPORT/g; s/\$BOOKSTACKPORT/$BOOKSTACKPORT/g; s/\$PAPERLESSPORT/$PAPERLESSPORT/g; s/\$OLLAMAPORT/$OLLAMAPORT/g; s/\$OCRPORT/$OCRPORT/g; s/\$DRAWIOPORT/$DRAWIOPORT/g; s/\$CYBERCHEFPORT/$CYBERCHEFPORT/g; s/\$REGEX101PORT/$REGEX101PORT/g; s/\$ITTOOLSPORT/$ITTOOLSPORT/g; s/\$CODIMDPORT/$CODIMDPORT/g; s/\$ETHERPADPORT/$ETHERPADPORT/g; s/\$GITLABPORT/$GITLABPORT/g; s/\$N8NPORT/$N8NPORT/g; s/\$DFIRIRISPORT/$DFIRIRISPORT/g; s/\$BBSHUFFLEPORT/$BBSHUFFLEPORT/g; s/\$VSCODEPORT/$VSCODEPORT/g; s/\$PHOTOPEAPORT/$PHOTOPEAPORT/g; s/\$STEGOTOOLKITPORT/$STEGOTOOLKITPORT/g; s/\$REMMINAPORT/$REMMINAPORT/g" "${DOCPATH}"/homer/config.yml
+  sed -i "s/\$HOSTIP/$HOSTIP/g; s/\$HOMERPORT/$HOMERPORT/g; s/\$VAULTPORT/$VAULTPORT/g; s/\$PORTAINERPORT/$PORTAINERPORT/g; s/\$PLANKAPORT/$PLANKAPORT/g; s/\$BOOKSTACKPORT/$BOOKSTACKPORT/g; s/\$PAPERLESSPORT/$PAPERLESSPORT/g; s/\$OLLAMAPORT/$OLLAMAPORT/g; s/\$OCRPORT/$OCRPORT/g; s/\$DRAWIOPORT/$DRAWIOPORT/g; s/\$CYBERCHEFPORT/$CYBERCHEFPORT/g; s/\$REGEX101PORT/$REGEX101PORT/g; s/\$ITTOOLSPORT/$ITTOOLSPORT/g; s/\$CODIMDPORT/$CODIMDPORT/g; s/\$ETHERPADPORT/$ETHERPADPORT/g; s/\$GITLABPORT/$GITLABPORT/g; s/\$N8NPORT/$N8NPORT/g; s/\$DFIRIRISPORT/$DFIRIRISPORT/g; s/\$BBSHUFFLEPORT/$BBSHUFFLEPORT/g; s/\$VSCODEPORT/$VSCODEPORT/g; s/\$PHOTOPEAPORT/$PHOTOPEAPORT/g; s/\$STEGOTOOLKITPORT/$STEGOTOOLKITPORT/g; s/\$REMMINAPORT/$REMMINAPORT/g" "${DOCPATH}"/homer/config.yml && log_success "Homer config updated successfully" || log_error "Failed to update Homer config"
 
 ## Dashboard-icons is a git repo that contains a lot of icons for the dashboard
 #  git clone https://github.com/walkxcode/dashboard-icons.git
@@ -287,8 +294,8 @@ network_creation() {
   echo "--------------------------------------------------------------------------------------"
   echo "                         Creating Network..."
   echo "--------------------------------------------------------------------------------------"
-  docker network create "${HALPNETWORK}"
-  docker network create "${HALPNETWORK}_DB"
+  docker network create "${HALPNETWORK}" && log_success "Network ${HALPNETWORK} created successfully" || log_error "Failed to create network ${HALPNETWORK}"
+  docker network create "${HALPNETWORK}_DB" && log_success "Network ${HALPNETWORK}_DB created successfully" || log_error "Failed to create network ${HALPNETWORK}_DB"
 }
 
 set_color && echo
@@ -299,33 +306,33 @@ set_color && echo
 create_bookstack() {
   set_color && echo
   echo -e "\t\tCreating MySQL - BookStack-DB"
-  docker run -d --name BookStack-DB --hostname bookstack-db --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -e PUID=1000 -e PGID=1000 -e MYSQL_ROOT_PASSWORD=bookstackrootpassword -e TZ=America/Toronto -v "${DOCPATH}"/bookstack/db_data:/config -e MYSQL_DATABASE=bookstackapp -e MYSQL_USER=bookstack -e MYSQL_PASSWORD=bookstackpassword lscr.io/linuxserver/mariadb  #  > /dev/null 2>&1
+  docker run -d --name BookStack-DB --hostname bookstack-db --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -e PUID=1000 -e PGID=1000 -e MYSQL_ROOT_PASSWORD=bookstackrootpassword -e TZ=America/Toronto -v "${DOCPATH}"/bookstack/db_data:/config -e MYSQL_DATABASE=bookstackapp -e MYSQL_USER=bookstack -e MYSQL_PASSWORD=bookstackpassword lscr.io/linuxserver/mariadb && log_success "BookStack-DB created successfully" || log_error "Failed to create BookStack-DB"  #  > /dev/null 2>&1
 
   echo
   echo -e "\t\tCreating Bookstack"
-  docker run -d --name BookStack --hostname bookstack --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p $ALLOWEDIPS:$BOOKSTACKPORT:80 -v "${DOCPATH}"/bookstack/app_data:/config -v "${DOCPATH}"/bookstack/public:/var/www/bookstack/public:rw -e PUID=1000 -e PGID=1000 -e DB_PORT=3306 -e DB_HOST=BookStack-DB -e APP_URL=http://"$HOSTIP":$BOOKSTACKPORT -e DB_USER=bookstack -e DB_PASS=bookstackpassword -e DB_DATABASE=bookstackapp lscr.io/linuxserver/bookstack:24.05.4  #  > /dev/null 2>&1
+  docker run -d --name BookStack --hostname bookstack --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p $ALLOWEDIPS:$BOOKSTACKPORT:80 -v "${DOCPATH}"/bookstack/app_data:/config -v "${DOCPATH}"/bookstack/public:/var/www/bookstack/public:rw -e PUID=1000 -e PGID=1000 -e DB_PORT=3306 -e DB_HOST=BookStack-DB -e APP_URL=http://"$HOSTIP":$BOOKSTACKPORT -e DB_USER=bookstack -e DB_PASS=bookstackpassword -e DB_DATABASE=bookstackapp lscr.io/linuxserver/bookstack:24.05.4 && log_success "BookStack created successfully" || log_error "Failed to create BookStack"  #  > /dev/null 2>&1
 }
  
 create_planka() {
   set_color && echo
   echo -e "\t\tCreating PostGres - Planka-DB"
-  docker run -d --name Planka-DB --hostname planka-db --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -v "${DOCPATH}"/planka/db-data:/var/lib/postgresql/data:rw -e POSTGRES_DB=planka -e POSTGRES_HOST_AUTH_METHOD=trust postgres:14-alpine 
+  docker run -d --name Planka-DB --hostname planka-db --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -v "${DOCPATH}"/planka/db-data:/var/lib/postgresql/data:rw -e POSTGRES_DB=planka -e POSTGRES_HOST_AUTH_METHOD=trust postgres:14-alpine && log_success "Planka-DB created successfully" || log_error "Failed to create Planka-DB"
 
   echo
   echo -e "\t\tCreating Planka"
-  docker run -d --name Planka --hostname planka --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p $ALLOWEDIPS:$PLANKAPORT:1337 -e BASE_URL=http://"$HOSTIP":$PLANKAPORT -e DATABASE_URL=postgresql://postgres@Planka-DB/planka -e SECRET_KEY=secretofkeys -e DEFAULT_ADMIN_EMAIL=${LOGINUSER}@planka.local -e DEFAULT_ADMIN_PASSWORD=${ACTPASSWORD} -e DEFAULT_ADMIN_NAME=Admin -e DEFAULT_ADMIN_USERNAME=admin -v "${DOCPATH}"/planka/user-avatars:/app/public/user-avatars -v "${DOCPATH}"/planka/project-background-images:/app/public/project-background-images -v "${DOCPATH}"/planka/attachments:/app/private/attachments ghcr.io/plankanban/planka:latest
+  docker run -d --name Planka --hostname planka --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p $ALLOWEDIPS:$PLANKAPORT:1337 -e BASE_URL=http://"$HOSTIP":$PLANKAPORT -e DATABASE_URL=postgresql://postgres@Planka-DB/planka -e SECRET_KEY=secretofkeys -e DEFAULT_ADMIN_EMAIL=${LOGINUSER}@planka.local -e DEFAULT_ADMIN_PASSWORD=${ACTPASSWORD} -e DEFAULT_ADMIN_NAME=Admin -e DEFAULT_ADMIN_USERNAME=admin -v "${DOCPATH}"/planka/user-avatars:/app/public/user-avatars -v "${DOCPATH}"/planka/project-background-images:/app/public/project-background-images -v "${DOCPATH}"/planka/attachments:/app/private/attachments ghcr.io/plankanban/planka:latest && log_success "Planka created successfully" || log_error "Failed to create Planka"
 }
 
 create_portainer() {
   set_color && echo
   echo -e "\t\tCreating Portainer"
-  docker run -d --name Portainer --hostname portainer --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p $ALLOWEDIPS:$PORTAINERPORT:9000 -v /var/run/docker.sock:/var/run/docker.sock portainer/portainer-ce:latest 
+  docker run -d --name Portainer --hostname portainer --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p $ALLOWEDIPS:$PORTAINERPORT:9000 -v /var/run/docker.sock:/var/run/docker.sock portainer/portainer-ce:latest && log_success "Portainer created successfully" || log_error "Failed to create Portainer"
 }
 
 create_homer() {
   set_color && echo
   echo -e "\t\tCreating Homer"
-  docker run -d --name Homer --hostname homer --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p $HOMERPORT:8080 -u 0:0 -v "${DOCPATH}"/homer:/www/assets:rw -v "${DOCPATH}"/homer/tools:/www/assets/tools:rw -e INIT_ASSETS=1 b4bz/homer:latest 
+  docker run -d --name Homer --hostname homer --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p $HOMERPORT:8080 -u 0:0 -v "${DOCPATH}"/homer:/www/assets:rw -v "${DOCPATH}"/homer/tools:/www/assets/tools:rw -e INIT_ASSETS=1 b4bz/homer:latest && log_success "Homer created successfully" || log_error "Failed to create Homer"
 }
 
 create_vaultwarden() {
@@ -336,7 +343,7 @@ create_vaultwarden() {
 
   ls "${DOCPATH}"/vaultwarden/ssl/
   echo -e "\t\tCreating VaultWarden"
-  docker run -d --name VaultWarden --hostname vaultwarden --restart ${DOCKERSTART} -e SIGNUPS_ALLOWED=true -e INVITATIONS_ALLOWED=true -e DISABLE_ADMIN_TOKEN=false -e ADMIN_TOKEN='$argon2i$v=19$m=1024,t=1,p=2$em5qbXZ0OWtxQjcySHFINA$4ru65itAqedJVRs2C23JkQ' -e WEBSOCKET_ENABLED=false -p $VAULTPORT:80 -e ROCKET_TLS='{certs="/ssl/bitwarden.crt",key="/ssl/bitwarden.key"}' -v "${DOCPATH}"/vaultwarden/data:/data/:rw -v "${DOCPATH}"/vaultwarden/ssl:/ssl/:rw vaultwarden/server:latest
+  docker run -d --name VaultWarden --hostname vaultwarden --restart ${DOCKERSTART} -e SIGNUPS_ALLOWED=true -e INVITATIONS_ALLOWED=true -e DISABLE_ADMIN_TOKEN=false -e ADMIN_TOKEN='$argon2i$v=19$m=1024,t=1,p=2$em5qbXZ0OWtxQjcySHFINA$4ru65itAqedJVRs2C23JkQ' -e WEBSOCKET_ENABLED=false -p $VAULTPORT:80 -e ROCKET_TLS='{certs="/ssl/bitwarden.crt",key="/ssl/bitwarden.key"}' -v "${DOCPATH}"/vaultwarden/data:/data/:rw -v "${DOCPATH}"/vaultwarden/ssl:/ssl/:rw vaultwarden/server:latest && log_success "VaultWarden created successfully" || log_error "Failed to create VaultWarden"
 }
 
 create_dfir_iris() {
@@ -350,7 +357,7 @@ create_dfir_iris() {
   sed -i "s/#IRIS_ADM_PASSWORD=MySuperAdminPassword!/IRIS_ADM_PASSWORD=$ACTPASSWORD/" ./.env
   sed -i "s/INTERFACE_HTTPS_PORT=443/INTERFACE_HTTPS_PORT=$DFIRIRISPORT/" ./.env
   docker compose pull
-  docker compose up --detach
+  docker compose up --detach && log_success "DFIR-IRIS created successfully" || log_error "Failed to create DFIR-IRIS"
   cd ../..
 }
 
@@ -358,10 +365,10 @@ create_paperless() {
   set_color && echo
   echo -e "\t\tCreating Paperless"
   #docker volume create paperless_{data, media, pgdata, redisdata}
-  docker run -d --name Paperless-Redis --hostname paperless-redis --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -v "${DOCPATH}"/paperless/redisdata:/data docker.io/library/redis:7
+  docker run -d --name Paperless-Redis --hostname paperless-redis --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -v "${DOCPATH}"/paperless/redisdata:/data docker.io/library/redis:7 && log_success "Paperless-Redis created successfully" || log_error "Failed to create Paperless-Redis"
   chmod -R 777 "${DOCPATH}"/paperless/redisdata
-  docker run -d --name Paperless-DB --hostname paperless-db --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -v "${DOCPATH}"/paperless/pgdata:/var/lib/postgresql/data -e POSTGRES_DB=paperless -e POSTGRES_USER=paperless -e POSTGRES_PASSWORD=paperless docker.io/library/postgres:16
-  docker run -d --name Paperless-NGX --hostname paperless-ngx --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p $PAPERLESSPORT:8000 -v "${DOCPATH}"/paperless/data:/usr/src/paperless/data -v "${DOCPATH}"/paperless/media:/usr/src/paperless/media -v "${DOCPATH}"/paperless/export:/usr/src/paperless/export -v "${DOCPATH}"/paperless/consume:/usr/src/paperless/consume -e PAPERLESS_REDIS=redis://Paperless-Redis:6379 -e PAPERLESS_DBHOST=Paperless-DB -e PAPERLESS_OCR_LANGUAGE=eng -e USERMAP_UID=1000 -e USERMAP_GID=1000 -e PAPERLESS_OCR_LANGUAGES=fra ghcr.io/paperless-ngx/paperless-ngx:latest
+  docker run -d --name Paperless-DB --hostname paperless-db --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -v "${DOCPATH}"/paperless/pgdata:/var/lib/postgresql/data -e POSTGRES_DB=paperless -e POSTGRES_USER=paperless -e POSTGRES_PASSWORD=paperless docker.io/library/postgres:16 && log_success "Paperless-DB created successfully" || log_error "Failed to create Paperless-DB"
+  docker run -d --name Paperless-NGX --hostname paperless-ngx --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p $PAPERLESSPORT:8000 -v "${DOCPATH}"/paperless/data:/usr/src/paperless/data -v "${DOCPATH}"/paperless/media:/usr/src/paperless/media -v "${DOCPATH}"/paperless/export:/usr/src/paperless/export -v "${DOCPATH}"/paperless/consume:/usr/src/paperless/consume -e PAPERLESS_REDIS=redis://Paperless-Redis:6379 -e PAPERLESS_DBHOST=Paperless-DB -e PAPERLESS_OCR_LANGUAGE=eng -e USERMAP_UID=1000 -e USERMAP_GID=1000 -e PAPERLESS_OCR_LANGUAGES=fra ghcr.io/paperless-ngx/paperless-ngx:latest && log_success "Paperless-NGX created successfully" || log_error "Failed to create Paperless-NGX"
   #-e PAPERLESS_URL=https://paperless.example.com
   #-e PAPERLESS_SECRET_KEY=change-me
 }
@@ -370,7 +377,7 @@ create_ollama() {
   # https://github.com/ollama/ollama
   set_color && echo
   echo -e "\t\tCreating Ollama LLM"
-  docker run -d --name Ollama-LLM --hostname ollama-llm --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p 11434:11434 -v "${DOCPATH}"/ollama:/root/.ollama ollama/ollama
+  docker run -d --name Ollama-LLM --hostname ollama-llm --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p 11434:11434 -v "${DOCPATH}"/ollama:/root/.ollama ollama/ollama && log_success "Ollama-LLM created successfully" || log_error "Failed to create Ollama-LLM"
 }
 
 create_llm_gpu_cuda() {
@@ -398,48 +405,48 @@ create_openwebui() {
   # https://github.com/open-webui/open-webui    
   set_color && echo
   echo -e "\t\tCreating OpenWebUI"
-  docker run -d --name OpenWebUI --hostname openwebui --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p $ALLOWEDIPS:$OLLAMAPORT:8080 -e OLLAMA_BASE_URL=http://"$HOSTIP":11434 -v ollama:/root/.ollama -v open-webui:/app/backend/data ghcr.io/open-webui/open-webui:main
+  docker run -d --name OpenWebUI --hostname openwebui --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p $ALLOWEDIPS:$OLLAMAPORT:8080 -e OLLAMA_BASE_URL=http://"$HOSTIP":11434 -v ollama:/root/.ollama -v open-webui:/app/backend/data ghcr.io/open-webui/open-webui:main && log_success "OpenWebUI created successfully" || log_error "Failed to create OpenWebUI"
 }
 
 create_webpage() {
   set_color && echo
   docker build -t ollama-ocr "${DOCPATH}"/OCR/
-  docker run -d --name Ollama-OCR --hostname ollama-ocr --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -v "${DOCPATH}"/OCR/html:/var/www/html:rw -p $ALLOWEDIPS:$OCRPORT:5000 ollama-ocr
+  docker run -d --name Ollama-OCR --hostname ollama-ocr --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -v "${DOCPATH}"/OCR/html:/var/www/html:rw -p $ALLOWEDIPS:$OCRPORT:5000 ollama-ocr && log_success "Ollama-OCR created successfully" || log_error "Failed to create Ollama-OCR"
 }
 
 create_drawio() {
   # https://github.com/jgraph/drawio
   set_color && echo
   echo -e "\t\tCreating Draw.io"
-  docker run -d --name Draw.io --hostname drawio --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p $ALLOWEDIPS:$DRAWIOPORT:8080 jgraph/drawio:latest
+  docker run -d --name Draw.io --hostname drawio --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p $ALLOWEDIPS:$DRAWIOPORT:8080 jgraph/drawio:latest && log_success "Draw.io created successfully" || log_error "Failed to create Draw.io"
 }
 
 create_photopea() {
   # 
   set_color && echo
   echo -e "\t\tCreating Photopea"
-  docker run -d --name Photopea --hostname photopea --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p $ALLOWEDIPS:$PHOTOPEAPORT:8887 eorendel/photopea:latest
+  docker run -d --name Photopea --hostname photopea --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p $ALLOWEDIPS:$PHOTOPEAPORT:8887 eorendel/photopea:latest && log_success "Photopea created successfully" || log_error "Failed to create Photopea"
 }
 
 create_cyberchef() {
   # https://github.com/mpepping/docker-cyberchef
   set_color && echo
   echo -e "\t\tCreating CyberChef"
-  docker run -d --name CyberChef --hostname cyberchef --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p $ALLOWEDIPS:"$CYBERCHEFPORT":8000 mpepping/cyberchef:latest
+  docker run -d --name CyberChef --hostname cyberchef --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p $ALLOWEDIPS:"$CYBERCHEFPORT":8000 mpepping/cyberchef:latest && log_success "CyberChef created successfully" || log_error "Failed to create CyberChef"
 }
 
 create_regex101() {
   # https://github.com/LoopSun/regex101-docker
   set_color && echo
   echo -e "\t\tCreating Regex101"
-  docker run -d --name Regex101 --hostname regex101 --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p $ALLOWEDIPS:"$REGEX101PORT":9090 loopsun/regex101
+  docker run -d --name Regex101 --hostname regex101 --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p $ALLOWEDIPS:"$REGEX101PORT":9090 loopsun/regex101 && log_success "Regex101 created successfully" || log_error "Failed to create Regex101"
 }
 
 create_ittools() {
   # https://it-tools.tech/docker-run-to-docker-compose-converter
   set_color && echo
   echo -e "\t\tCreating IT Tools"
-  docker run -d --name IT-Tools --hostname it-tools --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p $ALLOWEDIPS:$ITTOOLSPORT:80 corentinth/it-tools:latest
+  docker run -d --name IT-Tools --hostname it-tools --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p $ALLOWEDIPS:$ITTOOLSPORT:80 corentinth/it-tools:latest && log_success "IT Tools created successfully" || log_error "Failed to create IT Tools"
 }
 
 create_codimd() {
@@ -447,39 +454,39 @@ create_codimd() {
   # https://github.com/hackmdio/codimd
   set_color && echo
   echo -e "\t\tCreating Codimd DB"
-  docker run -d --name Codimd-DB --hostname codimd-db --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -v "${DOCPATH}"/codimd/db-data:/var/lib/postgresql/data:rw -e POSTGRES_DB=codimd -e POSTGRES_USER=codimd -e POSTGRES_PASSWORD=${ACTPASSWORD} postgres:14-alpine 
+  docker run -d --name Codimd-DB --hostname codimd-db --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -v "${DOCPATH}"/codimd/db-data:/var/lib/postgresql/data:rw -e POSTGRES_DB=codimd -e POSTGRES_USER=codimd -e POSTGRES_PASSWORD=${ACTPASSWORD} postgres:14-alpine && log_success "Codimd-DB created successfully" || log_error "Failed to create Codimd-DB"
   
   echo
   echo -e "\t\tCreating Codimd"
-  docker run -d --name Codimd --hostname codimd --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p $ALLOWEDIPS:$CODIMDPORT:3000 -e CMD_DB_URL=postgres://codimd:${ACTPASSWORD}@Codimd-DB/codimd -e CMD_USECDN=false -v "${DOCPATH}"/codimd/uploads:/home/hackmd/app/public/uploads hackmdio/hackmd:2.5.4
+  docker run -d --name Codimd --hostname codimd --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p $ALLOWEDIPS:$CODIMDPORT:3000 -e CMD_DB_URL=postgres://codimd:${ACTPASSWORD}@Codimd-DB/codimd -e CMD_USECDN=false -v "${DOCPATH}"/codimd/uploads:/home/hackmd/app/public/uploads hackmdio/hackmd:2.5.4 && log_success "Codimd created successfully" || log_error "Failed to create Codimd"
 }
 
 create_n8n() {
   # https://github.com/n8n-io/n8n
   set_color && echo
   echo -e "\t\tCreating N8N"
-  docker run -d --name N8N --hostname n8n --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p $ALLOWEDIPS:$N8NPORT:5678 -e N8N_BASIC_AUTH_ACTIVE=true -e N8N_SECURE_COOKIE=false -e N8N_BASIC_AUTH_USER=${LOGINUSER}@n8n.local -e N8N_BASIC_AUTH_PASSWORD=${ACTPASSWORD} -v "${DOCPATH}"/n8n:/home/node/.n8n n8nio/n8n:latest
+  docker run -d --name N8N --hostname n8n --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p $ALLOWEDIPS:$N8NPORT:5678 -e N8N_BASIC_AUTH_ACTIVE=true -e N8N_SECURE_COOKIE=false -e N8N_BASIC_AUTH_USER=${LOGINUSER}@n8n.local -e N8N_BASIC_AUTH_PASSWORD=${ACTPASSWORD} -v "${DOCPATH}"/n8n:/home/node/.n8n n8nio/n8n:latest && log_success "N8N created successfully" || log_error "Failed to create N8N"
 }
 
 create_gitlab() {
   # https://docs.gitlab.com/ee/install/docker/installation.html
   set_color && echo
   echo -e "\t\tCreating GitLab"
-  docker run -d --name GitLab --hostname gitlab --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p $ALLOWEDIPS:"$GITLABPORT":80 -v "${DOCPATH}"/gitlab/config:/etc/gitlab:rw -v "${DOCPATH}"/gitlab/logs:/var/log/gitlab:rw -v "${DOCPATH}"/gitlab/data:/var/opt/gitlab:rw gitlab/gitlab-ce:latest
+  docker run -d --name GitLab --hostname gitlab --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p $ALLOWEDIPS:"$GITLABPORT":80 -v "${DOCPATH}"/gitlab/config:/etc/gitlab:rw -v "${DOCPATH}"/gitlab/logs:/var/log/gitlab:rw -v "${DOCPATH}"/gitlab/data:/var/opt/gitlab:rw gitlab/gitlab-ce:latest && log_success "GitLab created successfully" || log_error "Failed to create GitLab"
 }
 
 create_etherpad() {
   # https://github.com/ether/etherpad-lite
   set_color && echo
   echo -e "\t\tCreating Etherpad"
-  docker run -d --name EtherPad --hostname etherpad --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB --pids-limit 2048 -e TZ=America/New_York -e NODE_VERSION=22.8.0 -e YARN_VERSION=1.22.22 -e TIMEZONE= -e NODE_ENV=production -e ETHERPAD_PRODUCTION=1 -p $ALLOWEDIPS:"$ETHERPADPORT":9001 etherpad/etherpad
+  docker run -d --name EtherPad --hostname etherpad --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB --pids-limit 2048 -e TZ=America/New_York -e NODE_VERSION=22.8.0 -e YARN_VERSION=1.22.22 -e TIMEZONE= -e NODE_ENV=production -e ETHERPAD_PRODUCTION=1 -p $ALLOWEDIPS:"$ETHERPADPORT":9001 etherpad/etherpad && log_success "Etherpad created successfully" || log_error "Failed to create Etherpad"
 }
 
 create_remmina() {
   # https://github.com/linuxserver/docker-remmina
   set_color && echo
   echo -e "\t\tCreating Remmina"
-  docker run -d --name Remmina --hostname remmina -e PUID=1000 -e PGID=1000 -e TZ=Etc/UTC -p $ALLOWEDIPS:$REMMINAPORT:3000 -p $ALLOWEDIPS:3001:3001 -v "${DOCPATH}"/remmina/config:/config --restart unless-stopped lscr.io/linuxserver/remmina:latest
+  docker run -d --name Remmina --hostname remmina -e PUID=1000 -e PGID=1000 -e TZ=Etc/UTC -p $ALLOWEDIPS:$REMMINAPORT:3000 -p $ALLOWEDIPS:3001:3001 -v "${DOCPATH}"/remmina/config:/config --restart unless-stopped lscr.io/linuxserver/remmina:latest && log_success "Remmina created successfully" || log_error "Failed to create Remmina"
 }
 
 create_b_b_shuffle() {
@@ -490,7 +497,7 @@ create_b_b_shuffle() {
   #cp Images/Orange-Background.png "${DOCPATH}"/B-B-Shuffle/App/img/page-back.png
   git clone https://github.com/p3hndrx/B-B-Shuffle.git "${DOCPATH}"/B-B-Shuffle
   docker build -t b-b-shuffle "${DOCPATH}"/B-B-Shuffle/
-  docker run -d --name B-B-Shuffle --hostname b-b-shuffle --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p $ALLOWEDIPS:"${BBSHUFFLEPORT}":80 -v "${DOCPATH}"/B-B-Shuffle/html:/var/www/html:rw b-b-shuffle
+  docker run -d --name B-B-Shuffle --hostname b-b-shuffle --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p $ALLOWEDIPS:"${BBSHUFFLEPORT}":80 -v "${DOCPATH}"/B-B-Shuffle/html:/var/www/html:rw b-b-shuffle && log_success "B-B-Shuffle created successfully" || log_error "Failed to create B-B-Shuffle"
 }
 
 create_stego-toolkit() {
@@ -498,7 +505,7 @@ create_stego-toolkit() {
   set_color && echo
   echo -e "\t\tCreating Stego-Toolkit"
   git clone https://github.com/DominicBreuker/stego-toolkit.git "${DOCPATH}"/stego-toolkit
-  docker pull dominicbreuker/stego-toolkit:latest
+  docker pull dominicbreuker/stego-toolkit:latest && log_success "Stego-Toolkit pulled successfully" || log_error "Failed to pull Stego-Toolkit"
   #docker build -t stego-toolkit "${DOCPATH}"/stego-toolkit/
   #docker run -d --name Stego-Toolkit --hostname stego-toolkit --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -v "${DOCPATH}"/stego-toolkit:/root/stego-toolkit:rw stego-toolkit
   #docker run -it --rm -p 127.0.0.1:22:22 dominicbreuker/stego-toolkit /bin/bash -c "start_ssh.sh && ssh -X -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no root@localhost"
@@ -517,28 +524,28 @@ create_sift_remnux() {
   if [[ $build_pull_skip =~ ^[Bb][Uu][Ii][Ll][Dd]$ || $build_pull_skip =~ ^[Bb]$ ]]; then
     # Build the image
     echo "Building the image..."
-    docker build -t sift-remnux -f "${DOCPATH}"/siftnux-docker/Dockerfile "${DOCPATH}"/siftnux-docker
+    docker build -t sift-remnux -f "${DOCPATH}"/siftnux-docker/Dockerfile "${DOCPATH}"/siftnux-docker && log_success "SIFT-REMnux built successfully" || log_error "Failed to build SIFT-REMnux"
 
     # Run the container
-    docker run -d --name SIFT-REMnux --hostname sift-remnux --restart ${DOCKERSTART} -p $ALLOWEDIPS:33:22 -v "${DOCPATH}"/sift-remnux:/root sift-remnux
+    docker run -d --name SIFT-REMnux --hostname sift-remnux --restart ${DOCKERSTART} -p $ALLOWEDIPS:33:22 -v "${DOCPATH}"/sift-remnux:/root sift-remnux && log_success "SIFT-REMnux created successfully" || log_error "Failed to create SIFT-REMnux"
 
   elif [[ $build_pull_skip =~ ^[Pp][Uu][Ll][Ll]$ || $build_pull_skip =~ ^[Pp]$ ]]; then
     # Pull the image
     echo "Pulling the image..."
-    docker pull digitalsleuth/sift-remnux:latest
+    docker pull digitalsleuth/sift-remnux:latest && log_success "SIFT-REMnux pulled successfully" || log_error "Failed to pull SIFT-REMnux"
 
     # Run the container
-    docker run -d --name SIFT-REMnux --hostname sift-remnux --restart ${DOCKERSTART} -p $ALLOWEDIPS:33:22 -v "${DOCPATH}"/sift-remnux:/root digitalsleuth/sift-remnux:latest
+    docker run -d --name SIFT-REMnux --hostname sift-remnux --restart ${DOCKERSTART} -p $ALLOWEDIPS:33:22 -v "${DOCPATH}"/sift-remnux:/root digitalsleuth/sift-remnux:latest && log_success "SIFT-REMnux created successfully" || log_error "Failed to create SIFT-REMnux"
 
   else
-    echo "Skipping SIFT-REMnux setup."
+    log_success "Skipping SIFT-REMnux setup."
   fi
 }
 
 create_vscode() {
   set_color && echo
   echo -e "\t\tCreating VSCode"
-  docker run -d --name VSCode --hostname vscode --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p $ALLOWEDIPS:$VSCODEPORT:8443 -e PUID=1000 -e PGID=1000 -e TZ=Etc/UTC -e PASSWORD=${ACTPASSWORD} -e HASHED_PASSWORD= -e SUDO_PASSWORD=${ACTPASSWORD} -e SUDO_PASSWORD_HASH= -e DEFAULT_WORKSPACE=/config/workspace -v "${DOCPATH}"/vscode:/config lscr.io/linuxserver/code-server:latest
+  docker run -d --name VSCode --hostname vscode --restart ${DOCKERSTART} --network ${HALPNETWORK} --network ${HALPNETWORK}_DB -p $ALLOWEDIPS:$VSCODEPORT:8443 -e PUID=1000 -e PGID=1000 -e TZ=Etc/UTC -e PASSWORD=${ACTPASSWORD} -e HASHED_PASSWORD= -e SUDO_PASSWORD=${ACTPASSWORD} -e SUDO_PASSWORD_HASH= -e DEFAULT_WORKSPACE=/config/workspace -v "${DOCPATH}"/vscode:/config lscr.io/linuxserver/code-server:latest && log_success "VSCode created successfully" || log_error "Failed to create VSCode"
 
   # Install extensions
   echo "Installing VSCode Extensions..."
@@ -564,28 +571,28 @@ install_backup() {
   echo "--------------------------------------------------------------------------------------"
   echo "                         Creating Backup Cron Job..."
   echo "--------------------------------------------------------------------------------------"
-  echo "0 0 * * * tar -czvf /root/$(basename "${DOCPATH}")-backup.tar.gz -C ${DOCPATH} ." | crontab -
+  echo "0 0 * * * tar -czvf /root/$(basename "${DOCPATH}")-backup.tar.gz -C ${DOCPATH} ." | crontab - && log_success "Backup cron job created successfully" || log_error "Failed to create backup cron job"
   echo "Cron job created."
 
   # Shutdown all containers and backup the "${DOCPATH}" folder
   echo "--------------------------------------------------------------------------------------"
   echo "                         Shutting down all containers..."
   echo "--------------------------------------------------------------------------------------"
-  docker stop "$(docker ps -aq)"
+  docker stop "$(docker ps -aq)" && log_success "All containers stopped successfully" || log_error "Failed to stop all containers"
   echo "All containers stopped."
   echo
   echo "--------------------------------------------------------------------------------------"
-   # Backup the "${DOCPATH}" folder as root
+  # Backup the "${DOCPATH}" folder as root
   echo "--------------------------------------------------------------------------------------"
   echo "                         Backing up ""${DOCPATH}"" folder..."
   echo "--------------------------------------------------------------------------------------"
-  tar -czvf /root/zocker-data-backup.tar.gz -C "${DOCPATH}" .
+  tar -czvf /root/zocker-data-backup.tar.gz -C "${DOCPATH}" . && log_success "Backup completed successfully" || log_error "Failed to complete backup"
   echo "Backup completed: /root/zocker-data-backup.tar.gz"
   echo
   echo "--------------------------------------------------------------------------------------"
   echo "                         Restarting all containers..."
   echo "--------------------------------------------------------------------------------------"
-  docker start "$(docker ps -aq)"
+  docker start "$(docker ps -aq)" && log_success "All containers restarted successfully" || log_error "Failed to restart all containers"
   echo "All containers restarted."
   echo
   echo "--------------------------------------------------------------------------------------"
@@ -688,7 +695,7 @@ install_complete() {
 
 check_root_access        ## CHECKING FOR ROOT ACCESS...
 check_system_resources   ## CHECKING SYSTEM RESOURCES
- 
+
 print_tools_to_install   ## TOOLS TO BE INSTALLED
 create_prerequisites     ## UPDATES AND PREREQUISITES SETUP
 folder_variables_check   ## Data Folder Creation
