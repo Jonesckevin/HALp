@@ -35,7 +35,7 @@ create_prerequisites() {
     # Update and install prerequisites using the package manager
     $package_manager update -y
     $package_manager upgrade -y
-    $package_manager znstall -y htop git curl net-tools open-vm-tools-desktop openssh-server ca-certificates gnupg lsb-release software-properties-common apt-transport-https openjdk-11-jdk
+    $package_manager install -y htop git curl net-tools open-vm-tools-desktop openssh-server ca-certificates gnupg lsb-release software-properties-common apt-transport-https openjdk-11-jdk
 
     # Remove old docker if exists
     $package_manager remove -y docker.io containerd runc docker-compose
