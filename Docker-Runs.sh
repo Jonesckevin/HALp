@@ -107,10 +107,12 @@ create_homer() {
 }
 
 create_vaultwarden() {
+    echo -e "\t\tCreating VaultWarden Cert Folder"
     mkdir -p "${DOCPATH}"/vaultwarden/ssl
+    echo -e "\t\tCreating VaultWarden Self-Sign SSL Certificates"
+    openssl req -nodes -x509 -newkey rsa:4096 -keyout "${DOCPATH}"/vaultwarden/ssl/bitwarden.key -out "${DOCPATH}"/vaultwarden/ssl/bitwarden.crt -days 365 -subj "/C=CA/ST=Ontario/L=Ottawa/O=TF/CN=bitwarden.local" >/dev/null 2>&1 && log_success "Created SSL Certificates" || log_error "Failed to create SSL Certificates"
 
-    openssl req -nodes -x509 -newkey rsa:4096 -keyout "${DOCPATH}"/vaultwarden/ssl/bitwarden.key -out "${DOCPATH}"/vaultwarden/ssl/bitwarden.crt -days 365 -subj "/C=CA/ST=Ontario/L=Ottawa/O=TF/CN=bitwarden.local"
-
+    # Replace your Argon Key here with a new one using https://argon2.online/
     ls "${DOCPATH}"/vaultwarden/ssl/
     echo -e "\t\tCreating VaultWarden"
     docker run -d \
@@ -195,7 +197,7 @@ create_llm_gpu_cuda() {
         apt-transport-https
         ca-certificates curl
         software-properties-common)
-    for app in "${app_list[@]}"; do sudo apt-get install -y "$app"; done
+    for app in "${app_list[@]}"; do sudo apt-get install -y "$app" >/dev/null 2>&1; done
     curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
     echo "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu focal stable" | sudo tee /etc/apt/sources.list.d/docker.list >/dev/null
 
@@ -361,7 +363,6 @@ create_codimd() {
         postgres:14-alpine >/dev/null 2>&1 &&
         log_success "Codimd-DB created successfully" || log_error "Failed to create Codimd-DB"
 
-    echo
     echo -e "\t\tCreating Codimd"
     docker run -d \
         --name Codimd \
@@ -492,13 +493,13 @@ create_sift_remnux() {
             --name SIFT-REMnux \
             --hostname sift-remnux \
             --restart "${DOCKERSTART}" \
-            -p "$ALLOWEDIPS":33:22 -v "${DOCPATH}"/sift-remnux:/root sift-remnux &&
+            -p "$ALLOWEDIPS":33:22 -v "${DOCPATH}"/sift-remnux:/root sift-remnux >/dev/null 2>&1 &&
             log_success "SIFT-REMnux created successfully" || log_error "Failed to create SIFT-REMnux"
 
     elif [[ $build_pull_skip =~ ^[Pp][Uu][Ll][Ll]$ || $build_pull_skip =~ ^[Pp]$ ]]; then
         # Pull the image
         echo "Pulling the image..."
-        docker pull digitalsleuth/sift-remnux:latest &&
+        docker pull digitalsleuth/sift-remnux:latest >/dev/null 2>&1 &&
             log_success "SIFT-REMnux pulled successfully" || log_error "Failed to pull SIFT-REMnux"
 
         # Run the container
@@ -506,7 +507,7 @@ create_sift_remnux() {
             --name SIFT-REMnux \
             --hostname sift-remnux \
             --restart "${DOCKERSTART}" \
-            -p "$ALLOWEDIPS":33:22 -v "${DOCPATH}"/sift-remnux:/root digitalsleuth/sift-remnux:latest &&
+            -p "$ALLOWEDIPS":33:22 -v "${DOCPATH}"/sift-remnux:/root digitalsleuth/sift-remnux:latest >/dev/null 2>&1 &&
             log_success "SIFT-REMnux created successfully" || log_error "Failed to create SIFT-REMnux"
 
     else
@@ -531,7 +532,7 @@ create_vscode() {
         -e SUDO_PASSWORD_HASH= \
         -e DEFAULT_WORKSPACE=/config/workspace \
         -v "${DOCPATH}"/vscode:/config \
-        lscr.io/linuxserver/code-server:latest &&
+        lscr.io/linuxserver/code-server:latest >/dev/null 2>&1 &&
         log_success "VSCode created successfully" || log_error "Failed to create VSCode"
 
     # Install extensions
@@ -561,7 +562,7 @@ create_vscode() {
     )
 
     for extension in "${extensions[@]}"; do
-        docker exec -it VSCode /app/code-server/bin/code-server --install-extension "$extension" &&
+        docker exec -it VSCode /app/code-server/bin/code-server --install-extension "$extension" 2>&1 &&
             log_success "Installed $extension" || log_error "Failed to install $extension"
     done
 }

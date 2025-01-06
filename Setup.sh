@@ -7,13 +7,13 @@ exec 3>&1 4>&2
 log_success() {
   tput setaf 2
   echo "$(date '+%Y-%m-%d %H:%M:%S') [SUCCESS] $1" >>"$LOGFILE"
-  tput sgr0
+  tput $counter
 }
 
 log_error() {
   tput setaf 1
   echo "$(date '+%Y-%m-%d %H:%M:%S') [ERROR] $1" >>"$LOGFILE"
-  tput sgr0
+  tput $counter
 }
 
 create_docker_commands() {
@@ -53,15 +53,16 @@ set_color() {
 }
 
 install_figlet_lolcat() {
+  echo "Checking for figlet and lolcat..."
   # Check if figlet and lolcat are installed
   if ! command -v figlet || ! command -v lolcat; then
+    set_color && echo "Installing figlet and lolcat..."
     set_color && sudo apt-get install figlet -y
     set_color && sudo apt-get install ruby -y
     set_color && sudo gem install lolcat
   fi
 }
 
-## Variables
 # Docker Variables
 # Declare an associative array to store variables and their values
 declare -A docker_vars=(
@@ -190,6 +191,7 @@ print_tools_to_install() {
   echo -e "\t VSCode\t\t<-  $VSCODEPORT ->\tVSCode"
   echo -e "\t StegoToolkit\t<-  $STEGOTOOLKITPORT ->\tStegoToolkit"
   echo -e "\t Remmina\t<-  $REMMINAPORT ->\tRemote Desktop"
+  echo
 }
 
 create_prerequisites() {
@@ -203,7 +205,7 @@ create_prerequisites() {
 
 folder_variables_check() {
   set_color && echo
-  figlet -f slant -w 120 "Data Folder & Variables" | lolcat
+  figlet -f slant -w 120 "Data Folder" | lolcat
 
   if [[ -d "${DOCPATH}" ]]; then
     echo "NOTE: Deleting ""${DOCPATH}"" will remove all pre-made or existing data."
@@ -316,7 +318,7 @@ default_logins_summary() {
   echo -e " Homer          | $HOSTIP:$HOMERPORT         | Visit URL                                                   | N/A"
   echo -e " Portainer      | $HOSTIP:$PORTAINERPORT       | <You can create your own>                                   | <You can create your own>"
   echo -e " VaultWarden    | $HOSTIP:$VAULTPORT       | User - Signup to Create your own account                    | <You can create your own>"
-  echo -e " VaultWarden    | $HOSTIP:$VAULTPORT/admin | N/A                                                         | L7G\$DF8@@SA5SA*PAPVWK7SQUF\$N#J"
+  echo -e " VaultWarden    | $HOSTIP:$VAULTPORT/admin | N/A                                                         | Manually set Argon2id: 'password'"
   echo -e " BookStack      | $HOSTIP:$BOOKSTACKPORT       | admin@admin.com                                             | ${ACTPASSWORD}"
   echo -e " Planka         | $HOSTIP:$PLANKAPORT       | admin@planka.local                                          | ${ACTPASSWORD}"
   echo -e " DFIR-IRIS      | $HOSTIP:$DFIRIRISPORT       | ${LOGINUSER}                                                       | ${ACTPASSWORD}"
@@ -357,7 +359,7 @@ install_complete() {
   echo "--------------------------------------------------------------------------------------"
   echo " Setting up Permissions...to be full 777 - Very Insecure, but this should be a closed system"
   sudo chmod -R 777 "${DOCPATH}"
-  echo " Permissions set to 777"
+  echo " Permissions set to $DOCPATH 777"
   echo "--------------------------------------------------------------------------------------"
   echo " Insert Profit Here"
   echo "--------------------------------------------------------------------------------------"
@@ -367,9 +369,9 @@ install_complete() {
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   echo "The bash source is ${BASH_SOURCE[0]}"
-  figlet -f slant -w 140 "               HALp" | lolcat
   install_figlet_lolcat
-
+  figlet -f slant -w 140 "               HALp" | lolcat
+  
   create_docker_commands
   check_root_access      ## CHECKING FOR ROOT ACCESS...
   check_system_resources ## CHECKING SYSTEM RESOURCES
@@ -389,7 +391,6 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   create_bookstack     ## Installing Wiki...
   create_planka        ## Installing KanBan...
   create_paperless     ## Installing Paperless...
-  create_ollama        ## Installing Ollama...
   create_llm_gpu_cuda  ## Installing Ollama with GPU and CUDA...
   create_ocr           ## Installing Ollama-OCR...
   create_ittools       ## Installing IT Tools...
