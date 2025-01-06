@@ -4,6 +4,12 @@ The Happy Application Land, Personal (HALp) is crafted similarly to a HAL system
 
 Updating may be a challenge if the system is offline. So it is recommended to have a backup of any data and running the script on a new system if you want to update. Followed by transfering the data over afterwards.
 
+### **Instructional Youtube Video**
+
+<a href="https://youtu.be/_7cjBfB1x7Q">
+   <img src="https://i9.ytimg.com/vi/_7cjBfB1x7Q/sddefault.jpg?v=677c4c5a&sqp=CLyw8bsG&rs=AOn4CLCPn189_w0C8Q0yEPsST6UFR7rWlw" style="object-fit: cover; object-position: center; width: 100%; height: auto; aspect-ratio: 16/9;">
+</a>
+
 ## Template to add your own tool(s)
 
 ```bash
