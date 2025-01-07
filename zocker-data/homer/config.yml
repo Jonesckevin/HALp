@@ -98,7 +98,7 @@ services:
     items:
       - name: "Ollama LLM"
         logo: "assets/tools/ollama.png"
-        url: "http://$HOSTIP:$OLLAMAPORT"
+        url: "http://$HOSTIP:$OPENWEBUIPORT"
 
       - name: "Ollama OCR"
         logo: "assets/tools/ollama.png"
