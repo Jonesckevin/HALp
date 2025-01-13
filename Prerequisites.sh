@@ -20,7 +20,6 @@ else
   exit 1
 fi
 echo
-
 # Prompt user for prerequisites
 read -r -p "Do you want to go through the prerequisites? (y/N): " response
 if [[ $response =~ ^[Yy]$ ]]; then
@@ -30,18 +29,22 @@ if [[ $response =~ ^[Yy]$ ]]; then
   echo "-----------------------------------------------------------------------------------------"
   echo
   # Update and install prerequisites using the package manager
-  sudo $package_manager update -y &&
+  echo "Action Initiated: sudo apt-get update && upgrade ..."
+  sudo $package_manager update -y > /dev/null &&
     log_success "System updated successfully" || log_error "System update failed"
-  sudo $package_manager upgrade -y &&
+  sudo $package_manager upgrade -y > /dev/null &&
     log_success "System upgraded successfully" || log_error "System upgrade failed"
-  sudo $package_manager install -y htop git curl net-tools open-vm-tools-desktop openssh-server ca-certificates gnupg lsb-release software-properties-common apt-transport-https openjdk-11-jdk &&
+  echo "Action Initiated: Installing multiple apt-gets..."
+  sudo $package_manager install -y htop git curl net-tools open-vm-tools-desktop openssh-server ca-certificates gnupg lsb-release software-properties-common apt-transport-https openjdk-11-jdk > /dev/null &&
     log_success "Prerequisites installed successfully" || log_error "Failed to install prerequisites"
 
   # Remove old docker if exists
-  sudo $package_manager remove -y docker.io containerd runc docker-compose &&
+  echo "Action Initiated: Removing old Docker versions..."
+  sudo $package_manager remove -y docker.io containerd runc docker-compose > /dev/null &&
     log_success "Old Docker versions removed successfully" || log_error "Failed to remove old Docker versions"
 
   # Update repository with official docker
+  echo "Action Initiated: Adding Docker repository..."
   install -m 0755 -d /etc/apt/keyrings
   if [[ $package_manager == "apt-get" ]]; then
     curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
@@ -52,9 +55,11 @@ if [[ $response =~ ^[Yy]$ ]]; then
   fi
 
   # Update with new repository then install docker and dependencies
-  sudo $package_manager update -y &&
+  echo "Action Initiated: sudo apt-get update ..."
+  sudo $package_manager update -y > /dev/null &&
     log_success "Docker repository updated successfully" || log_error "Failed to update Docker repository"
-  sudo $package_manager install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin &&
+  echo "Action Initiated: Installing apt-get Docker..."
+  sudo $package_manager install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin > /dev/null &&
     log_success "Docker installed successfully" || log_error "Failed to install Docker"
 
   # Configure docker to be used without requiring sudo
