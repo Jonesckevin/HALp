@@ -23,15 +23,14 @@ docker_pull_q() {
         count=$((count + 1))
     done
     echo "--------------------------------------------------------"
-    read -p "Do you want to continue and check which docker images you have? (y/n): " pull_all
+    read -r -p "Do you want to continue and check which docker images you have? (y/N): " pull_all
 
-    if [ "$pull_all" != "y" ]; then
+    if [[ "$pull_all" != "y" && "$pull_all" != "Y" && "$pull_all" != [yY].. ]]; then
         log_success "Exiting without pulling any images."
         echo "Exiting without pulling any images."
         #exit 0
-    fi
-
-    # Step 3: Check which images do not exist locally
+    else
+        # Step 3: Check which images do not exist locally
     missing_images=()
     for image in $images; do
         if ! docker image inspect "$image" > /dev/null 2>&1; then
@@ -50,9 +49,9 @@ docker_pull_q() {
             echo -e "\e[3$((count % 8))m\t\t$count. $image\e[0m"
             count=$((count + 1))
         done
-        read -p "Do you want to continue pulling the missing images? (y/n): " pull_missing
+        read -r -p "Do you want to continue pulling the missing images? (y/N): " pull_missing
 
-        if [ "$pull_missing" != "y" ]; then
+        if [ "$pull_missing" != "y" ] && [ "$pull_missing" != "Y" ]; then
             log_success "Exiting without pulling any images."
             echo "Exiting without pulling any images."
             #exit 0
@@ -70,10 +69,15 @@ docker_pull_q() {
         done
     fi
 
-    echo "Docker images pull process completed."
+        echo "Docker images pull process completed."
+    fi
+
+
 }
 
 docker_build_q() {
+    echo "--------------------------------------------------------------------------"
+    echo "--------------------------------------------------------------------------"
     # Step 5: Pull/Build all Building Images
 
     images=$(grep -oP 'docker build -t\s+\K\S+' ./Docker-Runs.sh | sort | uniq)

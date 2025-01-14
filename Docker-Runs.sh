@@ -96,6 +96,7 @@ create_portainer() {
 }
 
 create_homer() {
+    dashboard_SED ## Replaces IP and Ports in Homer Config
     echo -e "\t\tCreating Homer"
     docker run -d \
         --name Homer \
@@ -384,6 +385,8 @@ create_codimd() {
         -e POSTGRES_PASSWORD="${ACTPASSWORD}" \
         postgres:14-alpine >/dev/null 2>&1 &&
         log_success "Codimd-DB created successfully" || log_error "Failed to create Codimd-DB"
+        sleep 10
+        chmod -R 777 "${DOCPATH}"/codimd/db-data
 
     echo -e "\t\tCreating Codimd"
     docker run -d \
@@ -417,6 +420,8 @@ create_n8n() {
         -v "${DOCPATH}"/n8n:/home/node/.n8n \
         n8nio/n8n:latest >/dev/null 2>&1 &&
         log_success "N8N created successfully" || log_error "Failed to create N8N"
+        sleep 5
+        chmod -R 777 "${DOCPATH}"/n8n
 }
 
 create_gitlab() {
@@ -433,6 +438,8 @@ create_gitlab() {
         -v "${DOCPATH}"/gitlab/data:/var/opt/gitlab:rw \
         gitlab/gitlab-ce:latest >/dev/null 2>&1 &&
         log_success "GitLab created successfully" || log_error "Failed to create GitLab"
+        sleep 5
+        chmod -R 777 "${DOCPATH}"/gitlab
 }
 
 create_etherpad() {
