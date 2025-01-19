@@ -1,45 +1,45 @@
 #!/bin/bash
 
 LOGFILE="./HALP_Log.log"
-exec > >(tee -a "$LOGFILE") 2>&1
+#exec > >(tee -a "$LOGFILE") 2>&1
 exec 3>&1 4>&2
 
 log_success() {
   tput setaf 2
   echo "$(date '+%Y-%m-%d %H:%M:%S') [SUCCESS] $1" >>"$LOGFILE"
-  tput $counter
+  tput setaf $counter
 }
 
 log_error() {
   tput setaf 1
   echo "$(date '+%Y-%m-%d %H:%M:%S') [ERROR] $1" >>"$LOGFILE"
-  tput $counter
+  tput setaf $counter
 }
 
 create_docker_commands() {
   # Create executables for starting all Docker containers
   echo '#!/bin/bash' | sudo tee /usr/local/bin/dockerstart >/dev/null
-  echo "sudo docker start \$(docker ps -a --format \"{{.Names}}\" | tail -n +1)" | sudo tee -a /usr/local/bin/dockerstart >/dev/null
+  echo "sudo docker start \$(docker ps -a --format \"{{.Names}}\" | tail -n +\${1:-1})" | sudo tee -a /usr/local/bin/dockerstart >/dev/null
   sudo chmod +x /usr/local/bin/dockerstart &&
     log_success "dockerstart command created successfully" || log_error "Failed to create dockerstart command"
   # Create executables for stopping all Docker containers
   echo '#!/bin/bash' | sudo tee /usr/local/bin/dockerstop >/dev/null
-  echo "sudo docker stop \$(docker ps -a --format \"{{.Names}}\" | tail -n +1)" | sudo tee -a /usr/local/bin/dockerstop >/dev/null
+  echo "sudo docker stop \$(docker ps -a --format \"{{.Names}}\" | tail -n +\${1:-1})" | sudo tee -a /usr/local/bin/dockerstop >/dev/null
   sudo chmod +x /usr/local/bin/dockerstop &&
     log_success "dockerstop command created successfully" || log_error "Failed to create dockerstop command"
   # Create executables for removing all Docker containers
   echo '#!/bin/bash' | sudo tee /usr/local/bin/dockerrm >/dev/null
-  echo "sudo docker rm \$(docker ps -a --format \"{{.Names}}\" | tail -n +1)" | sudo tee -a /usr/local/bin/dockerrm >/dev/null
+  echo "sudo docker rm \$(docker ps -a --format \"{{.Names}}\" | tail -n +\${1:-1})" | sudo tee -a /usr/local/bin/dockerrm >/dev/null
   sudo chmod +x /usr/local/bin/dockerrm &&
     log_success "dockerrm command created successfully" || log_error "Failed to create dockerrm command"
   # Create executables for restarting all Docker containers
   echo '#!/bin/bash' | sudo tee /usr/local/bin/dockerrestart >/dev/null
-  echo "sudo docker restart \$(docker ps -a --format \"{{.Names}}\" | tail -n +1)" | sudo tee -a /usr/local/bin/dockerrestart >/dev/null
+  echo "sudo docker restart \$(docker ps -a --format \"{{.Names}}\" | tail -n +\${1:-1})" | sudo tee -a /usr/local/bin/dockerrestart >/dev/null
   sudo chmod +x /usr/local/bin/dockerrestart &&
     log_success "dockerrestart command created successfully" || log_error "Failed to create dockerrestart command"
   # Create executables for listing all Docker containers
   echo '#!/bin/bash' | sudo tee /usr/local/bin/dockerpss >/dev/null
-  printf 'sudo docker ps -a --format "table \t{{.Names}}\t{{.Status}}\t{{.Ports}}" | tail -n +2\n' | sudo tee -a /usr/local/bin/dockerpss >/dev/null
+  printf 'sudo docker ps --format "table \\t{{.Names}}\\t{{.Status}}\\t{{.Ports}}" | tail -n +${1:-2} | sort -k ${2:-2}\n' | sudo tee -a /usr/local/bin/dockerpss >/dev/null
   sudo chmod +x /usr/local/bin/dockerpss &&
     log_success "dockerpss command created successfully" || log_error "Failed to create dockerpss command"
 }
@@ -56,10 +56,16 @@ install_figlet_lolcat() {
   echo "Checking for figlet and lolcat..."
   # Check if figlet and lolcat are installed
   if ! command -v figlet || ! command -v lolcat; then
+    echo "Apt-Get Update..."
+    apt-get update >/dev/null 2>&1 &&
+      log_success "Apt-Get Update" || log_error "Failed to install figlet"
     set_color && echo "Installing figlet and lolcat..."
-    set_color && sudo apt-get install figlet -y
-    set_color && sudo apt-get install ruby -y
-    set_color && sudo gem install lolcat
+    set_color && sudo apt-get install figlet -y >/dev/null 2>&1 &&
+      log_success "figlet installed successfully" || log_error "Failed to install figlet"
+    set_color && sudo apt-get install ruby -y >/dev/null 2>&1 &&
+      log_success "Ruby installed successfully" || log_error "Failed to install Ruby"
+    set_color && sudo gem install lolcat >/dev/null 2>&1 &&
+      log_success "lolcat installed successfully" || log_error "Failed to install lolcat"
   fi
 }
 
@@ -105,7 +111,7 @@ done
 check_root_access() {
   set_color
   echo "--------------------------------------------------------------------------------------"
-  figlet -f slant -w 140 "Checking Root Access" | lolcat
+  figlet -f slant -w 140 "  Root Access" | lolcat
   echo "--------------------------------------------------------------------------------------"
   if [[ $EUID -ne 0 ]]; then
     log_error "This script must be run as root"
@@ -115,14 +121,14 @@ check_root_access() {
     log_success "Running as user: $(whoami)"
     log_success "Moving Forward..."
     echo "Settings permissions to 777"
-    sudo chmod -R 777 ./*
+    sudo chmod -R 777 ./* && log_success "Permissions set to 777" || log_error "Failed to set permissions to 777"
   fi
 }
 
 check_system_resources() {
   set_color
   echo "--------------------------------------------------------------------------------------"
-  figlet -f slant -w 400 "Checking System Resources" | lolcat
+  figlet -f slant -w 140 "  System Resources" | lolcat
   echo "                     It's recommended to have 12 Cores and 16GB RAM"
   echo -e "\e[31m Install all tools, and AI Models; it's recommended to have more than 50GB of storage\e[0m"
   echo "--------------------------------------------------------------------------------------"
@@ -198,6 +204,7 @@ create_prerequisites() {
   set_color
   if [[ -f ./Prerequisites.sh ]]; then
     source ./Prerequisites.sh
+    log_success "Prerequisites.sh found"
   else
     log_error "Prerequisites.sh not found"
   fi
@@ -267,8 +274,20 @@ create_dockers() {
   echo "--------------------------------------------------------------------------------------"
   echo "                         Creating Docker Containers..."
   echo "--------------------------------------------------------------------------------------"
+  # Run the Docker_Pull.sh script which queries and asks to pull first or not
+  if [[ -f ./Docker_Pull.sh ]]; then
+    source ./Docker_Pull.sh && log_success "Source Docker_Pull.sh found" || log_error "Source Docker_Pull.sh not found"
+      docker_pull_q && log_success "Docker_Pull_q Executed" || log_error "Docker_Pull_q.sh not completed properly"
+      docker_build_q && log_success "Docker_Build_q Executed" || log_error "Docker_Build_q.sh not completed properly"
+  else
+    log_error "Docker_Pull.sh not found"
+  fi
+  
+
+  # Run the Docker-Runs.sh script which contains all the docker run commands
   if [[ -f ./Docker-Runs.sh ]]; then
     source ./Docker-Runs.sh
+    log_success "Source Docker-Runs.sh found"
   else
     log_error "Docker-Runs.sh not found"
   fi
@@ -291,7 +310,7 @@ fn_summary_cleanup() {
   echo "-------------------------------------------------------------------------------------------------------------------------"
   echo
   echo "Currently your Docker containers ID are numbers and are as follows:"
-  echo -e '               docker ps --format \"table \\t{{.Names}}\\t{{.Status}}\\t{{.Ports}}\" | sort -k 2'
+  echo -e '               docker ps --format "table \\t{{.Names}}\\t{{.Status}}\\t{{.Ports}}" | tail -n +2 | sort -k 2'
   echo "                                      OR " dockerpss ""
   echo "-------------------------------------------------------------------------------------------------------------------------"
   counter=5 && tput setaf $counter
@@ -346,7 +365,8 @@ postcreation_changes() {
   echo && set_color
   if [[ -f ./Post_Setup.sh ]]; then
     chmod +x ./Post_Setup.sh
-    ./Post_Setup.sh
+    #./Post_Setup.sh
+    source ./Post_Setup.sh
   else
     log_error "Post_Setup.sh not found"
   fi
@@ -358,7 +378,8 @@ install_complete() {
   echo "                             Installation Complete"
   echo "--------------------------------------------------------------------------------------"
   echo " Setting up Permissions...to be full 777 - Very Insecure, but this should be a closed system"
-  sudo chmod -R 777 "${DOCPATH}"
+  sudo chmod -R 777 "${DOCPATH}" &&
+    log_success "Permissions set to $DOCPATH 777" || log_error "Failed to set permissions to $DOCPATH 777"
   echo " Permissions set to $DOCPATH 777"
   echo "--------------------------------------------------------------------------------------"
   echo " Insert Profit Here"
@@ -380,8 +401,6 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   create_prerequisites   ## UPDATES AND PREREQUISITES SETUP
   folder_variables_check ## Data Folder Creation
   network_creation       ## Creating Network...
-
-  dashboard_SED ## Replaces IP and Ports in Homer Config
 
   create_dockers
   create_portainer     ## Creating Portainer...
@@ -408,12 +427,9 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   create_stego-toolkit ## Installing Stego-Toolkit...
   create_sift_remnux   ## Installing SIFT-REMnux...
 
-  postcreation_changes ## Post Creation Changes such as replace images or change colors
-
   fn_summary_cleanup ## SUMMARY of Installation for user to see
-
   default_logins_summary ## VISIT $HOSTIP:$HOMERPORT TO ACCESS HOMER
-
   #install_backup           ## Creating Backup Cron Job and Running Backup
 
+  postcreation_changes ## Post Creation Changes such as replace images or change colors\
 fi

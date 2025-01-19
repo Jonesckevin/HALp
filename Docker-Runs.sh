@@ -58,7 +58,8 @@ create_planka() {
         --network "${HALPNETWORK}"_DB \
         -v "${DOCPATH}"/planka/db-data:/var/lib/postgresql/data:rw \
         -e POSTGRES_DB=planka \
-        -e POSTGRES_HOST_AUTH_METHOD=trust postgres:14-alpine >/dev/null 2>&1 &&
+        -e POSTGRES_HOST_AUTH_METHOD=trust \
+        postgres:14-alpine >/dev/null 2>&1 &&
         log_success "Planka-DB created successfully" || log_error "Failed to create Planka-DB"
     echo -e "\t\tCreating Planka"
     docker run -d \
@@ -95,6 +96,7 @@ create_portainer() {
 }
 
 create_homer() {
+    dashboard_SED ## Replaces IP and Ports in Homer Config
     echo -e "\t\tCreating Homer"
     docker run -d \
         --name Homer \
@@ -110,7 +112,7 @@ create_vaultwarden() {
     echo -e "\t\tCreating VaultWarden Cert Folder"
     mkdir -p "${DOCPATH}"/vaultwarden/ssl
     echo -e "\t\tCreating VaultWarden Self-Sign SSL Certificates"
-    openssl req -nodes -x509 -newkey rsa:4096 -keyout "${DOCPATH}"/vaultwarden/ssl/bitwarden.key -out "${DOCPATH}"/vaultwarden/ssl/bitwarden.crt -days 365 -subj "/C=CA/ST=Ontario/L=Ottawa/O=TF/CN=bitwarden.local" >/dev/null 2>&1 && log_success "Created SSL Certificates" || log_error "Failed to create SSL Certificates"
+    openssl req -nodes -x509 -newkey rsa:4096 -keyout "${DOCPATH}"/vaultwarden/ssl/bitwarden.key -out "${DOCPATH}"/vaultwarden/ssl/bitwarden.crt -days 365 -subj "/C=CA/ST=Ontario/L=Ottawa/O=TF/CN=bitwarden.local" >/dev/null 2>&1 && log_success "VaultWarden SSL Certificated" || log_error "Failed to create SSL Certificates"
 
     # Replace your Argon Key here with a new one using https://argon2.online/
     ls "${DOCPATH}"/vaultwarden/ssl/
@@ -133,17 +135,22 @@ create_vaultwarden() {
 }
 
 create_dfir_iris() {
-    echo -e "\t\tCreating DFIR-IRIS"
-    git clone https://github.com/dfir-iris/iris-web.git "${DOCPATH}/iris-web" >/dev/null 2>&1
-    cd "${DOCPATH}"/iris-web || exit
-    git checkout v2.4.12 >/dev/null 2>&1 && log_success "Checked out DFIR-IRIS v2.4.12" || log_error "Failed to checkout DFIR-IRIS v2.4.12"
-    cp .env.model .env
-    sed -i "s/#IRIS_ADM_USERNAME=administrator/IRIS_ADM_USERNAME=$LOGINUSER/" ./.env
-    sed -i "s/#IRIS_ADM_PASSWORD=MySuperAdminPassword!/IRIS_ADM_PASSWORD=$ACTPASSWORD/" ./.env
-    sed -i "s/INTERFACE_HTTPS_PORT=443/INTERFACE_HTTPS_PORT=$DFIRIRISPORT/" ./.env
-    docker compose pull >/dev/null 2>&1 && log_success "Pulled DFIR-IRIS" || log_error "Failed to pull DFIR-IRIS"
-    docker compose up -d >/dev/null 2>&1 && log_success "DFIR-IRIS created successfully" || log_error "Failed to create DFIR-IRIS"
-    cd ../..
+    if [ ! -d "${DOCPATH}/iris-web" ]; then
+        echo -e "\t\tCreating DFIR-IRIS"
+        git clone https://github.com/dfir-iris/iris-web.git "${DOCPATH}/iris-web" >/dev/null 2>&1 && log_success "Cloned DFIR-IRIS" || log_error "Failed to clone DFIR-IRIS"
+        cd "${DOCPATH}"/iris-web && log_success "Moved to iris-web Directory" || log_error "Failed to move to iris-web Directory"
+        git checkout v2.4.12 >/dev/null 2>&1 && log_success "Checked out DFIR-IRIS v2.4.12" || log_error "Failed to checkout DFIR-IRIS v2.4.12"
+        cp .env.model .env && log_success "Copied DFIR-IRIS .env" || log_error "Failed to copy DFIR-IRIS .env"
+        sed -i "s/#IRIS_ADM_USERNAME=administrator/IRIS_ADM_USERNAME=$LOGINUSER/" ./.env && log_success "Set DFIR-IRIS Admin Username" || log_error "Failed to set DFIR-IRIS Admin Username"
+        sed -i "s/#IRIS_ADM_PASSWORD=MySuperAdminPassword!/IRIS_ADM_PASSWORD=$ACTPASSWORD/" ./.env && log_success "Set DFIR-IRIS Admin Password" || log_error "Failed to set DFIR-IRIS Admin Password"
+        sed -i "s/INTERFACE_HTTPS_PORT=443/INTERFACE_HTTPS_PORT=$DFIRIRISPORT/" ./.env && log_success "Set DFIR-IRIS Port" || log_error "Failed to set DFIR-IRIS Port"
+        docker compose pull >/dev/null 2>&1 && log_success "Pulled DFIR-IRIS" || log_error "Failed to pull DFIR-IRIS"
+        docker compose up -d >/dev/null 2>&1 && log_success "DFIR-IRIS created successfully" || log_error "Failed to create DFIR-IRIS"
+        cd ../..
+    else
+        echo -e "\t\tDFIR-IRIS already exists"
+        log_success "DFIR-IRIS already exists"
+    fi
 }
 
 create_paperless() {
@@ -165,7 +172,8 @@ create_paperless() {
         --hostname paperless-db \
         --restart "${DOCKERSTART}" \
         --network "${HALPNETWORK}" \
-        --network "${HALPNETWORK}"_DB -v "${DOCPATH}"/paperless/pgdata:/var/lib/postgresql/data \
+        --network "${HALPNETWORK}"_DB \
+        -v "${DOCPATH}"/paperless/pgdata:/var/lib/postgresql/data \
         -e POSTGRES_DB=paperless \
         -e POSTGRES_USER=paperless \
         -e POSTGRES_PASSWORD=paperless \
@@ -178,7 +186,11 @@ create_paperless() {
         --restart "${DOCKERSTART}" \
         --network "${HALPNETWORK}" \
         --network "${HALPNETWORK}"_DB \
-        -p "$PAPERLESSPORT":8000 -v "${DOCPATH}"/paperless/data:/usr/src/paperless/data -v "${DOCPATH}"/paperless/media:/usr/src/paperless/media -v "${DOCPATH}"/paperless/export:/usr/src/paperless/export -v "${DOCPATH}"/paperless/consume:/usr/src/paperless/consume \
+        -p "$PAPERLESSPORT":8000 \
+        -v "${DOCPATH}"/paperless/data:/usr/src/paperless/data \
+        -v "${DOCPATH}"/paperless/media:/usr/src/paperless/media \
+        -v "${DOCPATH}"/paperless/export:/usr/src/paperless/export \
+        -v "${DOCPATH}"/paperless/consume:/usr/src/paperless/consume \
         -e PAPERLESS_REDIS=redis://Paperless-Redis:6379 \
         -e PAPERLESS_DBHOST=Paperless-DB \
         -e PAPERLESS_OCR_LANGUAGE=eng \
@@ -192,6 +204,7 @@ create_paperless() {
 }
 
 create_llm_gpu_cuda() {
+    create_llm_install(){
     ## Set up the repository for Docker Engine
     app_list=(
         apt-transport-https
@@ -202,6 +215,7 @@ create_llm_gpu_cuda() {
     echo "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu focal stable" | sudo tee /etc/apt/sources.list.d/docker.list >/dev/null
 
     ## Install Docker Engine
+    echo -e "\t App Update & Install Docker..."
     sudo apt-get update >/dev/null 2>&1
     app_list=(
         docker-ce
@@ -223,12 +237,30 @@ create_llm_gpu_cuda() {
     curl -s -L https://nvidia.github.io/nvidia-docker/"$distribution"/nvidia-docker.list | sudo tee /etc/apt/sources.list.d/nvidia-docker.list
     curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg && curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list | sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' | sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list
 
-    sudo apt-get update >/dev/null 2>&1
-    sudo apt-get install -y nvidia-docker2 >/dev/null 2>&1
-    sudo apt-get install -y nvidia-container-runtime >/dev/null 2>&1
-    sudo apt-get install -y nvidia-utils-550 >/dev/null 2>&1
-    sudo systemctl restart docker >/dev/null 2>&1
+    echo -e "\t App Update & Install Nvidia Docker..."
+    sudo apt-get update >/dev/null 2>&1 && log_success "System updated successfully" || log_error "System update failed"
+    sudo apt-get install -y nvidia-docker2 >/dev/null 2>&1 && log_success "Nvidia Docker2 installed successfully" || log_error "Failed to install Nvidia Docker2"
+    sudo apt-get install -y nvidia-container-runtime >/dev/null 2>&1 && log_success "Nvidia Container Runtime installed successfully" || log_error "Failed to install Nvidia Container Runtime"
+    sudo apt-get install -y nvidia-utils-550 >/dev/null 2>&1 && log_success "Nvidia Utils installed successfully" || log_error "Failed to install Nvidia Utils"
+    sudo systemctl restart docker >/dev/null 2>&1 && log_success "Docker restarted successfully" || log_error "Failed to restart Docker"
 
+    echo -e "\t Apt Update & Install Nvidia Container Toolkit..."
+    sudo apt-get update  >/dev/null 2>&1 && sudo apt-get install -y nvidia-container-toolkit >/dev/null 2>&1
+    sudo nvidia-ctk runtime configure --runtime=docker >/dev/null 2>&1
+
+    sudo docker run --rm --runtime=nvidia --gpus all ubuntu \
+        nvidia-smi >/dev/null 2>&1 &&
+        log_success "Docker Nvidia-SMI is working" || log_error "Docker Nvidia-SMI is not working"
+
+    echo '#!/bin/bash' | sudo tee /usr/local/bin/dockercuda
+    printf 'sudo docker run --rm --runtime=nvidia --gpus all ubuntu nvidia-smi' | sudo tee -a /usr/local/bin/dockercuda
+    sudo chmod +x /usr/local/bin/dockercuda
+    echo "You can use the 'dockercuda' or 'nvidia-smi' command to check if the GPU is working."
+
+    }
+    create_llm_install
+
+    create_llm_install_docker(){
     # Create Ollama LLM and OpenWebUI
     # https://github.com/ollama/ollama
     echo -e "\t\tCreating Ollama LLM"
@@ -252,32 +284,23 @@ create_llm_gpu_cuda() {
         --gpus all \
         --add-host=host.docker.internal:host-gateway \
         -p "$ALLOWEDIPS":"$OPENWEBUIPORT":8080 \
-        -v ./open-webui:/app/backend/data \
+        -v "${DOCPATH}"/open-webui:/app/backend/data \
         ghcr.io/open-webui/open-webui:cuda >/dev/null 2>&1 &&
         log_success "OpenWebUI created successfully" || log_error "Failed to create OpenWebUI"
     #nvidia-smi
-
-    sudo apt-get update  >/dev/null 2>&1 && sudo apt-get install -y nvidia-container-toolkit >/dev/null 2>&1
-    sudo nvidia-ctk runtime configure --runtime=docker >/dev/null 2>&1
-
-    sudo docker run --rm --runtime=nvidia --gpus all ubuntu \
-        nvidia-smi >/dev/null 2>&1 &&
-        log_success "Docker Nvidia-SMI is working" || log_error "Docker Nvidia-SMI is not working"
-
-    echo '#!/bin/bash' | sudo tee /usr/local/bin/dockercuda
-    printf 'sudo docker run --rm --runtime=nvidia --gpus all ubuntu nvidia-smi' | sudo tee -a /usr/local/bin/dockercuda
-    sudo chmod +x /usr/local/bin/dockercuda
-    echo "You can use the 'dockercuda' or 'nvidia-smi' command to check if the GPU is working."
+    }
+    create_llm_install_docker
 }
 
 create_ocr() {
-    docker build -t ollama-ocr "${DOCPATH}"/OCR/  >/dev/null 2>&1
+    docker build -t ollama-ocr "${DOCPATH}"/ollama-ocr/ >/dev/null 2>&1 &&
+        log_success "Ollama-OCR built successfully" || log_error "Failed to build Ollama-OCR"
     docker run -d \
         --name Ollama-OCR \
         --hostname ollama-ocr \
         --restart "${DOCKERSTART}" \
         --network "${HALPNETWORK}" \
-        --network "${HALPNETWORK}"_DB -v "${DOCPATH}"/OCR/html:/var/www/html:rw \
+        --network "${HALPNETWORK}"_DB -v "${DOCPATH}"/ollama-ocr/html:/var/www/html:rw \
         -p "$ALLOWEDIPS":"$OCRPORT":5000 \
         ollama-ocr >/dev/null 2>&1 &&
         log_success "Ollama-OCR created successfully" || log_error "Failed to create Ollama-OCR"
@@ -362,6 +385,8 @@ create_codimd() {
         -e POSTGRES_PASSWORD="${ACTPASSWORD}" \
         postgres:14-alpine >/dev/null 2>&1 &&
         log_success "Codimd-DB created successfully" || log_error "Failed to create Codimd-DB"
+        sleep 10
+        chmod -R 777 "${DOCPATH}"/codimd/db-data
 
     echo -e "\t\tCreating Codimd"
     docker run -d \
@@ -395,6 +420,8 @@ create_n8n() {
         -v "${DOCPATH}"/n8n:/home/node/.n8n \
         n8nio/n8n:latest >/dev/null 2>&1 &&
         log_success "N8N created successfully" || log_error "Failed to create N8N"
+        sleep 5
+        chmod -R 777 "${DOCPATH}"/n8n
 }
 
 create_gitlab() {
@@ -408,8 +435,11 @@ create_gitlab() {
         --network "${HALPNETWORK}"_DB \
         -p "$ALLOWEDIPS":"$GITLABPORT":80 -v "${DOCPATH}"/gitlab/config:/etc/gitlab:rw \
         -v "${DOCPATH}"/gitlab/logs:/var/log/gitlab:rw \
-        -v "${DOCPATH}"/gitlab/data:/var/opt/gitlab:rw gitlab/gitlab-ce:latest >/dev/null 2>&1 &&
+        -v "${DOCPATH}"/gitlab/data:/var/opt/gitlab:rw \
+        gitlab/gitlab-ce:latest >/dev/null 2>&1 &&
         log_success "GitLab created successfully" || log_error "Failed to create GitLab"
+        sleep 5
+        chmod -R 777 "${DOCPATH}"/gitlab
 }
 
 create_etherpad() {
@@ -427,7 +457,8 @@ create_etherpad() {
         -e TIMEZONE= \
         -e NODE_ENV=production \
         -e ETHERPAD_PRODUCTION=1 \
-        -p "$ALLOWEDIPS":"$ETHERPADPORT":9001 etherpad/etherpad >/dev/null 2>&1 &&
+        -p "$ALLOWEDIPS":"$ETHERPADPORT":9001 \
+        etherpad/etherpad >/dev/null 2>&1 &&
         log_success "Etherpad created successfully" || log_error "Failed to create Etherpad"
 }
 
@@ -442,7 +473,8 @@ create_remmina() {
         -e TZ=Etc/UTC \
         -p "$ALLOWEDIPS":"$REMMINAPORT":3000 \
         -p "$ALLOWEDIPS":3001:3001 -v "${DOCPATH}"/remmina/config:/config \
-        --restart unless-stopped lscr.io/linuxserver/remmina:latest >/dev/null 2>&1 &&
+        --restart unless-stopped \
+        lscr.io/linuxserver/remmina:latest >/dev/null 2>&1 &&
         log_success "Remmina created successfully" || log_error "Failed to create Remmina"
 }
 
@@ -451,14 +483,15 @@ create_b_b_shuffle() {
     echo -e "\t\tCreating B-B-Shuffle"
     ## If you want to change the background image, you can replace the Orange-Background.png with your own image
     #cp Images/Orange-Background.png "${DOCPATH}"/B-B-Shuffle/App/img/page-back.png
-    git clone https://github.com/p3hndrx/B-B-Shuffle.git "${DOCPATH}"/B-B-Shuffle >/dev/null 2>&1
-    docker build -t b-b-shuffle "${DOCPATH}"/B-B-Shuffle/ >/dev/null 2>&1
+    git clone https://github.com/p3hndrx/B-B-Shuffle.git "${DOCPATH}"/b-b-shuffle >/dev/null 2>&1
+    docker build -t b-b-shuffle "${DOCPATH}"/b-b-shuffle/ >/dev/null 2>&1 &&
+        log_success "B-B-Shuffle built successfully" || log_error "Failed to build B-B-Shuffle"
     docker run -d \
         --name B-B-Shuffle \
         --hostname b-b-shuffle \
         --restart "${DOCKERSTART}" \
         --network "${HALPNETWORK}" \
-        -p "$ALLOWEDIPS":"${BBSHUFFLEPORT}":80 -v "${DOCPATH}"/B-B-Shuffle/html:/var/www/html:rw b-b-shuffle >/dev/null 2>&1 &&
+        -p "$ALLOWEDIPS":"${BBSHUFFLEPORT}":80 -v "${DOCPATH}"/b-b-shuffle/html:/var/www/html:rw b-b-shuffle >/dev/null 2>&1 &&
         log_success "B-B-Shuffle created successfully" || log_error "Failed to create B-B-Shuffle"
 }
 
@@ -466,9 +499,11 @@ create_stego_toolkit() {
     # https://github.com/DominicBreuker/stego-toolkit
     echo -e "\t\tCreating Stego-Toolkit"
     git clone https://github.com/DominicBreuker/stego-toolkit.git "${DOCPATH}"/stego-toolkit
-    docker pull dominicbreuker/stego-toolkit:latest &&
+    docker pull \
+    dominicbreuker/stego-toolkit:latest >/dev/null 2>&1 &&
         log_success "Stego-Toolkit pulled successfully" || log_error "Failed to pull Stego-Toolkit"
-    #docker build -t stego-toolkit "${DOCPATH}"/stego-toolkit/
+    #docker build -t stego-toolkit "${DOCPATH}"/stego-toolkit/ >/dev/null 2>&1 &&
+    #    log_success "Stego-Toolkit built successfully" || log_error "Failed to build Stego-Toolkit"
     #docker run -d --name Stego-Toolkit --hostname stego-toolkit --restart "${DOCKERSTART}" --network "${HALPNETWORK}" --network "${HALPNETWORK}"_DB -v "${DOCPATH}"/stego-toolkit:/root/stego-toolkit:rw stego-toolkit
     #docker run -it --rm -p 127.0.0.1:22:22 dominicbreuker/stego-toolkit /bin/bash -c "start_ssh.sh && ssh -X -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no root@localhost"
     #docker run -it --rm -p 127.0.0.1:6901:6901 dominicbreuker/stego-toolkit /bin/bash -c "start_vnc.sh && vncserver :1 -geometry 1280x800 -depth 24 && tail -f /root/.vnc/*:1.log"
@@ -485,7 +520,9 @@ create_sift_remnux() {
     if [[ $build_pull_skip =~ ^[Bb][Uu][Ii][Ll][Dd]$ || $build_pull_skip =~ ^[Bb]$ ]]; then
         # Build the image
         echo "Building the image..."
-        docker build -t sift-remnux -f "${DOCPATH}"/siftnux-docker/Dockerfile "${DOCPATH}"/siftnux-docker &&
+        git clone https://github.com/digitalsleuth/sift-remnux.git "${DOCPATH}"/sift-remnux >/dev/null 2>&1 &&
+            log_success "SIFT-REMnux cloned successfully" || log_error "Failed to clone SIFT-REMnux"
+        docker build -t sift-remnux "${DOCPATH}"/siftnux-docker/ >/dev/null 2>&1 &&
             log_success "SIFT-REMnux built successfully" || log_error "Failed to build SIFT-REMnux"
 
         # Run the container
@@ -507,7 +544,8 @@ create_sift_remnux() {
             --name SIFT-REMnux \
             --hostname sift-remnux \
             --restart "${DOCKERSTART}" \
-            -p "$ALLOWEDIPS":33:22 -v "${DOCPATH}"/sift-remnux:/root digitalsleuth/sift-remnux:latest >/dev/null 2>&1 &&
+            -p "$ALLOWEDIPS":33:22 -v "${DOCPATH}"/sift-remnux:/root \
+            digitalsleuth/sift-remnux:latest >/dev/null 2>&1 &&
             log_success "SIFT-REMnux created successfully" || log_error "Failed to create SIFT-REMnux"
 
     else
@@ -622,4 +660,12 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
             ;;
         esac
     done
+else
+    echo "Running from file: $0"
+    read -r -p "Are you ready to continue / create the containers?  [Y/n]: " response
+        response=${response,,}
+        if [[ "$response" == "n" ]]; then
+            echo "Exiting..."
+            exit 1
+        fi
 fi
