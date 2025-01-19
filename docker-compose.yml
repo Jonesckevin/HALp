@@ -17,7 +17,7 @@ services:
         container_name: BookStack-DB
 
     linuxserver:
-        image: 'lscr.io/linuxserver/bookstack:24.05.4'
+        image: 'lscr.io/linuxserver/bookstack:latest'
         environment:
             - DB_DATABASE=bookstackapp
             - DB_PASS=bookstackpassword
