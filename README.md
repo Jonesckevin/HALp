@@ -6,7 +6,7 @@ Updating may be a challenge if the system is offline. So it is recommended to ha
 
 ### **Instructional Youtube Video**
 
-<a href="https://youtu.be/_7cjBfB1x7Q">
+<a href="https://www.youtube.com/watch?v=_7cjBfB1x7Q">
    <img src="https://i9.ytimg.com/vi/_7cjBfB1x7Q/sddefault.jpg?v=677c4c5a&sqp=CLyw8bsG&rs=AOn4CLCPn189_w0C8Q0yEPsST6UFR7rWlw" style="object-fit: cover; object-position: center; width: 40%; height: auto; aspect-ratio: 16/9; clip-path: inset(5% 0 5% 0);">
 </a>
 
@@ -32,9 +32,9 @@ create_new_tool
 You are not required to do the pre-requisites, but it is recommended specifically for docker install if you do not have it yet. Shouldn't hurt to say yes if you want to be sure. If it asks you to overwite anything, you can skip it.
 
 ```bash
-git clone https://github.com/Jonesckevin/HALP.git
+git clone https://github.com/jonesckevin/HALp.git
 
-cd HALP
+cd HALp
 
 sudo /bin/bash ./Setup.sh
 ```
@@ -48,9 +48,9 @@ dockerpss --format "table \t{{.Names}}\t{{.Status}}\t{{.Ports}}"
 ### Docker Compose
 
 ```bash
-git clone https://github.com/Jonesckevin/HALP.git
-cd HALP
-vi .env
+git clone https://github.com/jonesckevin/HALp.git
+cd HALp
+nano .env
 docker compose up -d
 ```
 

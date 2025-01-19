@@ -606,6 +606,8 @@ create_vscode() {
 }
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+    source ./Setup.sh
+
     FUNC_LIST=(
         create_bookstack
         create_planka
