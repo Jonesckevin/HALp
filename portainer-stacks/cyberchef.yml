@@ -1,0 +1,10 @@
+services:
+  cyber-chef:
+    image: mpepping/cyberchef:latest
+    container_name: CyberChef
+    ports:
+      - "8100:8000"
+    networks:
+      - docker-tools
+networks:
+  docker-tools: 

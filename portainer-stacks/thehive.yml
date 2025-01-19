@@ -1,0 +1,26 @@
+# https://docs.strangebee.com/cortex/installation-and-configuration/step-by-step-guide/#java-virtual-machine
+
+services:
+  hal-thehive:
+    image: thehiveproject/thehive4:4.1
+    container_name: Thehive4
+    restart: unless-stopped
+    ports:
+      - "8700:9000"
+    volumes:
+      - ./thehive/config/thehive/application.conf:/etc/thehive/application.conf
+      - ./thehive/volumes/thehive/db:/opt/thp/thehive/db
+      - ./thehive/volumes/thehive/index:/opt/thp/thehive/index
+      - ./thehive/volumes/thehive/data:/opt/thp/thehive/data
+    environment:
+      - MAX_HEAP_SIZE=2G
+      - HEAP_NEWSIZE=2G
+    networks:
+      - thehive
+networks:
+  thehive: 
+  
+volumes:
+  thehive_db:
+  thehive_index:
+  thehive_data:

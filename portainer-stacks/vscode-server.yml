@@ -1,0 +1,20 @@
+
+    vscode:
+        command: 'code-server --install-extension esbenp.prettier-vscode ms-python.debugpy redhat.vscode-yaml redhat.vscode-xml gitlab.gitlab-workflow vscode-icons-team.vscode-icons yzhang.markdown-all-in-one mechatroner.rainbow-csv oderwat.indent-rainbow shd101wyy.markdown-preview-enhanced grapecity.gc-excelviewer bierner.markdown-mermaid bpruitt-goddard.mermaid-markdown-syntax-highlighting'
+        image: 'lscr.io/linuxserver/code-server:latest'
+        environment:
+            - PUID=1000
+            - PGID=1000
+            - TZ=Etc/UTC
+            - PASSWORD=thepassword
+            - HASHED_PASSWORD=
+            - SUDO_PASSWORD=thepassword
+            - SUDO_PASSWORD_HASH=
+            - DEFAULT_WORKSPACE=/config/workspace
+        volumes:
+            - './vscode:/config'
+        ports:
+            - '8443:8443'
+        restart: 'always'
+        hostname: vscode
+        container_name: VSCode

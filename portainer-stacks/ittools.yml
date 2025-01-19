@@ -1,0 +1,7 @@
+
+services:
+  it-tools:
+    restart: unless-stopped
+    image: corentinth/it-tools:latest
+    ports:
+      - 8800:80

@@ -1,0 +1,16 @@
+
+services:
+  gitlab:
+    image: gitlab/gitlab-ce:latest
+    container_name: GitLab
+    hostname: gitlab
+    restart: always
+    ports:
+      - 8500:80
+    volumes:
+      - ./gitlab/config:/etc/gitlab:rw
+      - ./gitlab/logs:/var/log/gitlab:rw
+      - ./gitlab/data:/var/opt/gitlab:rw
+
+# .env
+# EXTERNAL_URL=https://gitlab.4n6post.com

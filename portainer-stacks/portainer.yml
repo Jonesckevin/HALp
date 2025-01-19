@@ -1,0 +1,9 @@
+    portainer-ce:
+        image: 'portainer/portainer-ce:latest'
+        volumes:
+            - '/var/run/docker.sock:/var/run/docker.sock'
+        ports:
+            - '9000:9000'
+        restart: 'always'
+        hostname: portainer
+        container_name: Portainer

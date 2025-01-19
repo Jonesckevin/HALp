@@ -1,0 +1,13 @@
+# Backdoors and Breaches
+# https://github.com/p3hndrx/B-B-Shuffle
+
+services:
+  shuffle:
+    image: jonesckevin/b-b-shuffle:latest
+    container_name: B-B-Shuffle
+    ports:
+      - "9500:80"
+    networks:
+      - docker-tools
+networks:
+  docker-tools: 

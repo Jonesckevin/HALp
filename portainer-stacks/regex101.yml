@@ -1,0 +1,8 @@
+
+services:
+  regex101:
+    image: loopsun/regex101:latest
+    container_name: regex101
+    restart: always
+    ports:
+     - 8400:9090

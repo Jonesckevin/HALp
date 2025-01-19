@@ -1,0 +1,24 @@
+    codimd-db:
+        image: 'postgres:14-alpine'
+        environment:
+            - POSTGRES_DB=codimd
+            - POSTGRES_USER=codimd
+            - POSTGRES_PASSWORD=thepassword
+        volumes:
+            - './codimd/db-data:/var/lib/postgresql/data'
+        restart: 'always'
+        hostname: codimd-db
+        container_name: Codimd-DB
+
+    codimd:
+        image: 'hackmdio/hackmd:2.5.4'
+        environment:
+            - CMD_DB_URL=postgres://codimd:thepassword@Codimd-DB/codimd
+            - CMD_USECDN=false
+        volumes:
+            - './codimd/uploads:/home/hackmd/app/public/uploads'
+        ports:
+            - '3000:3000'
+        restart: 'always'
+        hostname: codimd
+        container_name: Codimd

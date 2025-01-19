@@ -1,0 +1,7 @@
+    drawio:
+        image: 'jgraph/drawio:latest'
+        ports:
+            - '8080:8080'
+        restart: 'always'
+        hostname: drawio
+        container_name: Draw.io

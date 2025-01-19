@@ -39,111 +39,111 @@ colors:
 links:
   - name: "Home"
     icon: "fas fa-server"
-    url: "http://$HOSTIP:$HOMERPORT"
+    url: "http://172.30.148.185:80"
   - name: "MedaWiki"
     icon: "fas fa-book"
-    url: "http://$HOSTIP:$BOOKSTACKPORT/"
+    url: "http://172.30.148.185:1003/"
   - name: "SecondPage!"
     icon: "fas fa-copy"
     url: "#SoP_Pages"
   - name: "B-B-Shuffle"
     icon: "fas fa-dice"
-    url: "http://$HOSTIP:$BBSHUFFLEPORT"
+    url: "http://172.30.148.185:1016"
 services:
   - name: ""
     items:
       - name: "Homer"
         logo: "assets/tools/homer.png"
-        url: "http://$HOSTIP:$HOMERPORT"
+        url: "http://172.30.148.185:80"
         subtitle: ""
         tag: ""
         keywords: ""
       
       - name: "VaultWarden"
         logo: "assets/tools/vaultwarden-light.png"
-        url: "https://$HOSTIP:$VAULTPORT"
+        url: "https://172.30.148.185:1000"
         subtitle: "URI: /admin"
 
       - name: "Portainer"
         logo: "assets/tools/portainer.png"
-        url: "http://$HOSTIP:$PORTAINERPORT"
+        url: "http://172.30.148.185:1001"
 
       - name: "N8N"
         logo: "assets/tools/n8n.png"
-        url: "http://$HOSTIP:$N8NPORT"
+        url: "http://172.30.148.185:1014"
 
   - name: ""
     items:
       - name: "Planka"
         logo: "assets/tools/planka.png"
-        url: "http://$HOSTIP:$PLANKAPORT"
+        url: "http://172.30.148.185:1002"
       
       - name: "DFIR-IRIS"
         logo: "assets/tools/dfir-iris.png"
-        url: "https://$HOSTIP:$DFIRIRISPORT"
+        url: "https://172.30.148.185:1004"
 
       - name: "BookStack"
         logo: "assets/tools/bookstack.png"
-        url: "http://$HOSTIP:$BOOKSTACKPORT"
+        url: "http://172.30.148.185:1003"
 
       - name: "Paperless"
         logo: "assets/tools/paperless.png"
-        url: "http://$HOSTIP:$PAPERLESSPORT"
+        url: "http://172.30.148.185:1005"
 
       - name: "GitLab"
         logo: "assets/tools/gitlab.png"
-        url: "http://$HOSTIP:$GITLABPORT"
+        url: "http://172.30.148.185:1015"
 
   - name: ""
     items:
       - name: "Ollama LLM"
         logo: "assets/tools/ollama.png"
-        url: "http://$HOSTIP:$OPENWEBUIPORT"
+        url: "http://172.30.148.185:1006"
 
       - name: "Ollama OCR"
         logo: "assets/tools/ollama.png"
-        url: "http://$HOSTIP:$OCRPORT"
+        url: "http://172.30.148.185:1007"
 
       - name: "CyberChef"
         logo: "assets/tools/cyberchef.png"
-        url: "http://$HOSTIP:$CYBERCHEFPORT"
+        url: "http://172.30.148.185:1009"
 
       - name: "Regex101"
         logo: "assets/tools/RegExr.png"
-        url: "http://$HOSTIP:$REGEX101PORT"
+        url: "http://172.30.148.185:1010"
 
       - name: "IT-Tools"
         logo: "assets/tools/it-tools.png"
-        url: "http://$HOSTIP:$ITTOOLSPORT"
+        url: "http://172.30.148.185:1011"
 
   - name: ""
     items:
       - name: "codimd"
         logo: "assets/tools/codimd.png"
-        url: "http://$HOSTIP:$CODIMDPORT"
+        url: "http://172.30.148.185:1012"
       
       - name: "Etherpad"
         logo: "assets/tools/etherpad.png"
-        url: "http://$HOSTIP:$ETHERPADPORT"
+        url: "http://172.30.148.185:1013"
       
       - name: "VSCode"
         logo: "assets/tools/vscode.png"
-        url: "http://$HOSTIP:$VSCODEPORT"
+        url: "http://172.30.148.185:1017"
 
       - name: "Draw.io"
         logo: "assets/tools/draw.png"
-        url: "http://$HOSTIP:$DRAWIOPORT"
+        url: "http://172.30.148.185:1008"
 
       - name: "PhotoPea"
         logo: "assets/tools/photopea.png"
-        url: "http://$HOSTIP:$PHOTOPEAPORT"
+        url: "http://172.30.148.185:1018"
       
       - name: "Remmina"
         logo: "assets/tools/remmina.png"
-        url: "http://$HOSTIP:$REMMINAPORT"
+        url: "http://172.30.148.185:1021"
 
   - name: "Cyber Tabletop"
     items:
       - name: "B-B-Shuffle"
         logo: "assets/tools/b-b-shuffle.png"
-        url: "http://$HOSTIP:$BBSHUFFLEPORT"
+        url: "http://172.30.148.185:1016"
