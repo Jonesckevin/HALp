@@ -19,22 +19,22 @@ log_error() {
 create_docker_commands() {
   # Create executables for starting all Docker containers
   echo '#!/bin/bash' | sudo tee /usr/local/bin/dockerstart >/dev/null
-  echo "sudo docker start \$(docker ps -a --format \"{{.Names}}\" | tail -n +\${1:-1})" | sudo tee -a /usr/local/bin/dockerstart >/dev/null
+  echo "sudo docker start \$(sudo docker ps -a --format \"{{.Names}}\" | tail -n +\${1:-1})" | sudo tee -a /usr/local/bin/dockerstart >/dev/null
   sudo chmod +x /usr/local/bin/dockerstart &&
     log_success "dockerstart command created successfully" || log_error "Failed to create dockerstart command"
   # Create executables for stopping all Docker containers
   echo '#!/bin/bash' | sudo tee /usr/local/bin/dockerstop >/dev/null
-  echo "sudo docker stop \$(docker ps -a --format \"{{.Names}}\" | tail -n +\${1:-1})" | sudo tee -a /usr/local/bin/dockerstop >/dev/null
+  echo "sudo docker stop \$(sudo docker ps -a --format \"{{.Names}}\" | tail -n +\${1:-1})" | sudo tee -a /usr/local/bin/dockerstop >/dev/null
   sudo chmod +x /usr/local/bin/dockerstop &&
     log_success "dockerstop command created successfully" || log_error "Failed to create dockerstop command"
   # Create executables for removing all Docker containers
   echo '#!/bin/bash' | sudo tee /usr/local/bin/dockerrm >/dev/null
-  echo "sudo docker rm \$(docker ps -a --format \"{{.Names}}\" | tail -n +\${1:-1})" | sudo tee -a /usr/local/bin/dockerrm >/dev/null
+  echo "sudo docker rm \$(sudo docker ps -a --format \"{{.Names}}\" | tail -n +\${1:-1})" | sudo tee -a /usr/local/bin/dockerrm >/dev/null
   sudo chmod +x /usr/local/bin/dockerrm &&
     log_success "dockerrm command created successfully" || log_error "Failed to create dockerrm command"
   # Create executables for restarting all Docker containers
   echo '#!/bin/bash' | sudo tee /usr/local/bin/dockerrestart >/dev/null
-  echo "sudo docker restart \$(docker ps -a --format \"{{.Names}}\" | tail -n +\${1:-1})" | sudo tee -a /usr/local/bin/dockerrestart >/dev/null
+  echo "sudo docker restart \$(sudo docker ps -a --format \"{{.Names}}\" | tail -n +\${1:-1})" | sudo tee -a /usr/local/bin/dockerrestart >/dev/null
   sudo chmod +x /usr/local/bin/dockerrestart &&
     log_success "dockerrestart command created successfully" || log_error "Failed to create dockerrestart command"
   # Create executables for listing all Docker containers
@@ -58,7 +58,7 @@ install_figlet_lolcat() {
   if ! command -v figlet || ! command -v lolcat; then
     echo "Apt-Get Update..."
     apt-get update >/dev/null 2>&1 &&
-      log_success "Apt-Get Update" || log_error "Failed to install figlet"
+      log_success "apt update" || log_error "Failed to apt update"
     set_color && echo "Installing figlet and lolcat..."
     set_color && sudo apt-get install figlet -y >/dev/null 2>&1 &&
       log_success "figlet installed successfully" || log_error "Failed to install figlet"
