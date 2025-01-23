@@ -101,6 +101,7 @@ declare -A docker_vars=(
   [PHOTOPEAPORT]=1018
   [STEGOTOOLKITPORT]=1020
   [REMMINAPORT]=1021
+  [MITREPORT]=1022
 )
 
 # Export all variables
@@ -187,6 +188,7 @@ print_tools_to_install() {
   echo -e "\t Draw.io\t<-  $DRAWIOPORT ->\tDiagramming Tool"
   echo -e "\t Photopea\t<-  $PHOTOPEAPORT ->\tOnline Photo Editor"
   echo -e "\t CyberChef\t<-  $CYBERCHEFPORT ->\tCyberChef"
+  echo -e "\t MITRE ATT&CK\t<-  $MITREPORT ->\tMITRE ATT&CK Navigator"
   echo -e "\t Regex101\t<-  $REGEX101PORT ->\tRegex Testing"
   echo -e "\t IT Tools\t<-  $ITTOOLSPORT ->\tVarious IT Tools"
   echo -e "\t Codimd\t\t<-  $CODIMDPORT ->\tCollaborative Markdown Editor"
@@ -249,7 +251,7 @@ dashboard_SED() {
   echo "                         Editing Dashboard Configuration Files..."
   echo "--------------------------------------------------------------------------------------"
   echo "                 Fixing in the Homer Config via SED..."
-  sed -i "s/\$HOSTIP/$HOSTIP/g; s/\$HOMERPORT/$HOMERPORT/g; s/\$VAULTPORT/$VAULTPORT/g; s/\$PORTAINERPORT/$PORTAINERPORT/g; s/\$PLANKAPORT/$PLANKAPORT/g; s/\$BOOKSTACKPORT/$BOOKSTACKPORT/g; s/\$PAPERLESSPORT/$PAPERLESSPORT/g; s/\$OPENWEBUIPORT/$OPENWEBUIPORT/g; s/\$OCRPORT/$OCRPORT/g; s/\$DRAWIOPORT/$DRAWIOPORT/g; s/\$CYBERCHEFPORT/$CYBERCHEFPORT/g; s/\$REGEX101PORT/$REGEX101PORT/g; s/\$ITTOOLSPORT/$ITTOOLSPORT/g; s/\$CODIMDPORT/$CODIMDPORT/g; s/\$ETHERPADPORT/$ETHERPADPORT/g; s/\$GITLABPORT/$GITLABPORT/g; s/\$N8NPORT/$N8NPORT/g; s/\$DFIRIRISPORT/$DFIRIRISPORT/g; s/\$BBSHUFFLEPORT/$BBSHUFFLEPORT/g; s/\$VSCODEPORT/$VSCODEPORT/g; s/\$PHOTOPEAPORT/$PHOTOPEAPORT/g; s/\$STEGOTOOLKITPORT/$STEGOTOOLKITPORT/g; s/\$REMMINAPORT/$REMMINAPORT/g" "${DOCPATH}"/homer/config.yml &&
+  sed -i "s/\$HOSTIP/$HOSTIP/g; s/\$HOMERPORT/$HOMERPORT/g; s/\$VAULTPORT/$VAULTPORT/g; s/\$PORTAINERPORT/$PORTAINERPORT/g; s/\$PLANKAPORT/$PLANKAPORT/g; s/\$BOOKSTACKPORT/$BOOKSTACKPORT/g; s/\$PAPERLESSPORT/$PAPERLESSPORT/g; s/\$OPENWEBUIPORT/$OPENWEBUIPORT/g; s/\$OCRPORT/$OCRPORT/g; s/\$DRAWIOPORT/$DRAWIOPORT/g; s/\$CYBERCHEFPORT/$CYBERCHEFPORT/g; s/\$REGEX101PORT/$REGEX101PORT/g; s/\$ITTOOLSPORT/$ITTOOLSPORT/g; s/\$CODIMDPORT/$CODIMDPORT/g; s/\$ETHERPADPORT/$ETHERPADPORT/g; s/\$GITLABPORT/$GITLABPORT/g; s/\$N8NPORT/$N8NPORT/g; s/\$DFIRIRISPORT/$DFIRIRISPORT/g; s/\$BBSHUFFLEPORT/$BBSHUFFLEPORT/g; s/\$VSCODEPORT/$VSCODEPORT/g; s/\$PHOTOPEAPORT/$PHOTOPEAPORT/g; s/\$STEGOTOOLKITPORT/$STEGOTOOLKITPORT/g; s/\$REMMINAPORT/$REMMINAPORT/g; s/\$MITREPORT/$MITREPORT/g" "${DOCPATH}"/homer/config.yml &&
     log_success "Homer config updated successfully" || log_error "Failed to update Homer config"
 
   ## Dashboard-icons is a git repo that contains a lot of icons for the dashboard
@@ -348,6 +350,7 @@ default_logins_summary() {
   echo -e " Codimd         | $HOSTIP:$CODIMDPORT       | N/A                                                         | N/A"
   echo -e " Draw.io        | $HOSTIP:$DRAWIOPORT       | N/A                                                         | N/A"
   echo -e " CyberChef      | $HOSTIP:$CYBERCHEFPORT       | N/A                                                         | N/A"
+  echo -e " MITRE ATT&CK   | $HOSTIP:$MITREPORT       | N/A                                                         | N/A"
   echo -e " Photopea       | $HOSTIP:$PHOTOPEAPORT       | N/A                                                         | N/A"
   echo -e " Regex101       | $HOSTIP:$REGEX101PORT       | N/A                                                         | N/A"
   echo -e " IT Tools       | $HOSTIP:$ITTOOLSPORT       | N/A                                                         | N/A"
@@ -418,6 +421,7 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   create_gitlab        ## Installing GitLab...
   create_drawio        ## Installing Drawio...
   create_cyberchef     ## Installing CyberChef...
+  create_mitre_attack  ## Installing MITRE ATT&CK...
   create_photopea      ## Installing Photopea...
   create_remmina       ## Installing Remmina...
   create_regex101      ## Installing Regex101...

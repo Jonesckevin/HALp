@@ -344,6 +344,24 @@ create_cyberchef() {
         log_success "CyberChef created successfully" || log_error "Failed to create CyberChef"
 }
 
+mitre_attack_navigator() {
+    # https://github.com/mitre-attack/attack-navigator
+    echo -e "\t\tCreating MITRE-ATT&CK-Navigator"
+    git clone https://github.com/mitre-attack/attack-navigator "${DOCPATH}"/attack-navigator >/dev/null 2>&1 &&
+        log_success "Cloned MITRE-ATT&CK-Navigator" || log_error "Failed to clone MITRE-ATT&CK-Navigator"
+    docker build -t mitre/attack-navigator "${DOCPATH}"/attack-navigator/ >/dev/null 2>&1 &&
+        log_success "MITRE-ATT&CK-Navigator built successfully" || log_error "Failed to build MITRE-ATT&CK-Navigator"
+    docker run -d \
+        --name MITRE-ATTACK-Navigator \
+        --hostname mitre-attack-navigator \
+        --restart "${DOCKERSTART}" \
+        --network "${HALPNETWORK}" \
+        -p "$ALLOWEDIPS":"$ATTACKNAVIGATORPORT":4200 \
+        -v "${DOCPATH}"/attack-navigator/data:/src/nav-app \
+        mitre/attack-navigator >/dev/null 2>&1 &&
+        log_success "MITRE-ATT&CK-Navigator created successfully" || log_error "Failed to create MITRE-ATT&CK-Navigator"
+}
+
 create_regex101() {
     # https://github.com/LoopSun/regex101-docker
     echo -e "\t\tCreating Regex101"
@@ -573,36 +591,39 @@ create_vscode() {
         lscr.io/linuxserver/code-server:latest >/dev/null 2>&1 &&
         log_success "VSCode created successfully" || log_error "Failed to create VSCode"
 
-    # Install extensions
-    echo "Installing VSCode Extensions..."
-    extensions=(
-        esbenp.prettier-vscode
-        ms-python.debugpy
-        redhat.vscode-yaml
-        redhat.vscode-xml
-        gitlab.gitlab-workflow
-        vscode-icons-team.vscode-icons
-        yzhang.markdown-all-in-one
-        mechatroner.rainbow-csv
-        oderwat.indent-rainbow
-        shd101wyy.markdown-preview-enhanced
-        grapecity.gc-excelviewer
-        bierner.markdown-mermaid
-        bpruitt-goddard.mermaid-markdown-syntax-highlighting
-        timonwong.shellcheck
-        foxundermoon.shell-format
-        y-ysss.cisco-config-highlight
-        nopeslide.vscode-drawio-plugin-mermaid
-        ms-vscode.live-server
-        alanwalk.markdown-navigation
-        davidanson.vscode-markdownlint
-        devnullsp.mhtml2md
-    )
+    vscode_extensions() {
+        # Install extensions
+        echo "Installing VSCode Extensions..."
+        extensions=(
+            esbenp.prettier-vscode
+            ms-python.debugpy
+            redhat.vscode-yaml
+            redhat.vscode-xml
+            gitlab.gitlab-workflow
+            vscode-icons-team.vscode-icons
+            yzhang.markdown-all-in-one
+            mechatroner.rainbow-csv
+            oderwat.indent-rainbow
+            shd101wyy.markdown-preview-enhanced
+            grapecity.gc-excelviewer
+            bierner.markdown-mermaid
+            bpruitt-goddard.mermaid-markdown-syntax-highlighting
+            timonwong.shellcheck
+            foxundermoon.shell-format
+            y-ysss.cisco-config-highlight
+            nopeslide.vscode-drawio-plugin-mermaid
+            ms-vscode.live-server
+            alanwalk.markdown-navigation
+            davidanson.vscode-markdownlint
+            devnullsp.mhtml2md
+        )
 
-    for extension in "${extensions[@]}"; do
-        docker exec -it VSCode /app/code-server/bin/code-server --install-extension "$extension" 2>&1 &&
-            log_success "Installed $extension" || log_error "Failed to install $extension"
-    done
+        for extension in "${extensions[@]}"; do
+            docker exec -it VSCode /app/code-server/bin/code-server --install-extension "$extension" 2>&1 &&
+                log_success "Installed $extension" || log_error "Failed to install $extension"
+        done
+    }
+    #vscode_extensions
 }
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
@@ -621,6 +642,7 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
         create_drawio
         create_photopea
         create_cyberchef
+        mitre_attack_navigator
         create_regex101
         create_ittools
         create_codimd
