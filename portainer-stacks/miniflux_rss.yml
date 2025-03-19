@@ -1,0 +1,24 @@
+## RSS Feed Reader
+
+services:
+  miniflux:
+    image: miniflux/miniflux:latest
+    ports:
+      - "8050:8080"
+    depends_on:
+      - db
+    environment:
+      - DATABASE_URL=postgres://miniflux:secret@db/miniflux?sslmode=disable
+      - RUN_MIGRATIONS=1
+      - CREATE_ADMIN=1
+      - ADMIN_USERNAME=admin
+      - ADMIN_PASSWORD=password
+  db:
+    image: postgres:latest
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    volumes:
+      - miniflux-db:/var/lib/postgresql/data
+volumes:
+  miniflux-db:
