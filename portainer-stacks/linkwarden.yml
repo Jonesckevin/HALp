@@ -6,7 +6,7 @@ services:
     image: ghcr.io/linkwarden/linkwarden:latest
     restart: unless-stopped
     volumes:
-      - /your_path/linkwarden/data:/data/data
+      - ./linkwarden/data:/data/data
     environment:
       - DATABASE_URL=postgresql://dbuser1:PASSWORD@linkwarden-db:5432/linkwarden
       - NEXTAUTH_SECRET=SuperPassword
@@ -24,7 +24,7 @@ services:
       - POSTGRES_PASSWORD=PASSWORD
       - POSTGRES_DB=linkwarden
     volumes:
-      - /your_path/linkwarden/pgdata:/var/lib/postgresql/data
+      - ./linkwarden/pgdata:/var/lib/postgresql/data
     networks:
       - linkwarden_net
 networks:
