@@ -1,0 +1,9 @@
+# https://github.com/containrrr/watchtower.git
+services:
+  watchtower:
+    image: containrrr/watchtower
+    container_name: watchtower
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: --interval 600 open-webui  # Check for updates every 10 minutes
+    restart: unless-stopped
