@@ -1,0 +1,7 @@
+# https://github.com/mermaid-js/mermaid-live-editor
+
+services:
+    mermaid-js:
+        image: ghcr.io/mermaid-js/mermaid-live-editor
+        ports:
+            - '1105:8080'
