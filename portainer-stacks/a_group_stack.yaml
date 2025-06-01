@@ -1,0 +1,274 @@
+# --- Utility Services ---
+services:
+  bb-shuffle:
+    image: jonesckevin/b-b-shuffle:latest
+    container_name: bb-shuffle
+    hostname: bb-shuffle
+    restart: ${SHUFFLE_RESTART_POLICY:-unless-stopped}
+    ports:
+      - "${SHUFFLE_PORT:-9500}:80"
+
+  cyber-chef:
+    image: mpepping/cyberchef:latest
+    container_name: cyberchef
+    hostname: cyberchef
+    restart: ${SHUFFLE_RESTART_POLICY:-unless-stopped}
+    ports:
+      - "${CYBER_CHEF_PORT:-8100}:8000"
+
+  drawio:
+    image: jgraph/drawio:latest
+    container_name: drawio
+    hostname: drawio
+    restart: ${SHUFFLE_RESTART_POLICY:-unless-stopped}
+    ports:
+      - "${DRAWIO_PORT:-8810}:8080"
+
+  it-tools:
+    image: corentinth/it-tools:latest
+    container_name: it-tools
+    hostname: it-tools
+    restart: ${SHUFFLE_RESTART_POLICY:-unless-stopped}
+    ports:
+      - "${IT_TOOLS_PORT:-8800}:80"
+
+  nexterm:
+    image: germannewsmaker/nexterm:1.0.2-OPEN-PREVIEW
+    container_name: nexterm
+    hostname: nexterm
+    restart: ${SHUFFLE_RESTART_POLICY:-unless-stopped}
+    ports:
+      - "${NEXTERMPORT:-6989}:6989"
+    volumes:
+      - ./utility/nexterm:/app/data
+
+  photopea:
+    image: eorendel/photopea:latest
+    container_name: photopea
+    hostname: photopea
+    restart: ${SHUFFLE_RESTART_POLICY:-unless-stopped}
+    ports:
+      - "${PHOTOPEAPORT:-8887}:8887"
+
+  mermaid-js:
+    image: ghcr.io/mermaid-js/mermaid-live-editor
+    container_name: mermaid-js
+    hostname: mermaid-js
+    restart: ${SHUFFLE_RESTART_POLICY:-unless-stopped}
+    ports:
+      - "${MERMAID_PORT:-1105}:8080"
+
+  mht2md:
+    image: jonesckevin/mht2md:latest
+    container_name: mht2md
+    hostname: mht2md
+    restart: ${SHUFFLE_RESTART_POLICY:-unless-stopped}
+    ports:
+      - "${MHT2MD_PORT:-5674}:80"
+
+# --- Collaboration & Productivity ---
+  etherpad_app:
+    image: etherpad/etherpad:latest
+    container_name: etherpad_app
+    hostname: etherpad_app
+    restart: ${SHUFFLE_RESTART_POLICY:-unless-stopped}
+    user: "0:0"
+    tty: true
+    stdin_open: true
+    depends_on:
+      - etherpad_postgres
+    environment:
+      NODE_ENV: production
+      ADMIN_PASSWORD: "${ETHERPAD_APP_ADMIN_PASSWORD:-admin}"
+      DB_CHARSET: "${ETHERPAD_APP_DB_CHARSET:-utf8mb4}"
+      DB_HOST: etherpad_postgres
+      DB_NAME: "${ETHERPAD_POSTGRES_DATABASE:-etherpad}"
+      DB_PASS: "${ETHERPAD_POSTGRES_PASSWORD:-admin}"
+      DB_PORT: "${ETHERPAD_POSTGRES_PORT:-5432}"
+      DB_TYPE: "postgres"
+      DB_USER: "${ETHERPAD_POSTGRES_USER:-admin}"
+      DEFAULT_PAD_TEXT: "${ETHERPAD_APP_DEFAULT_PAD_TEXT:- }"
+      DISABLE_IP_LOGGING: "${ETHERPAD_APP_DISABLE_IP_LOGGING:-false}"
+      SOFFICE: "${ETHERPAD_APP_SOFFICE:-null}"
+      TRUST_PROXY: "${ETHERPAD_APP_TRUST_PROXY:-true}"
+    ports:
+      - "${ETHERPAD_PORT:-9001}:9001"
+    volumes:
+      - ./etherpad/plugins:/opt/etherpad-lite/src/plugin_packages
+      - ./etherpad/var:/opt/etherpad-lite/var
+
+  etherpad_postgres:
+    image: postgres:15-alpine
+    container_name: etherpad_postgres
+    hostname: etherpad_postgres
+    environment:
+      POSTGRES_DB: "${ETHERPAD_POSTGRES_DATABASE:-etherpad}"
+      POSTGRES_PASSWORD: "${ETHERPAD_POSTGRES_PASSWORD:-admin}"
+      POSTGRES_PORT: "${ETHERPAD_POSTGRES_PORT:-5432}"
+      POSTGRES_USER: "${ETHERPAD_POSTGRES_USER:-admin}"
+      PGDATA: /var/lib/postgresql/data/pgdata
+    restart: ${SHUFFLE_RESTART_POLICY:-unless-stopped}
+    volumes:
+      - ./etherpad/postgres_data:/var/lib/postgresql/data/pgdata
+
+  nextcloud_app:
+    image: nextcloud:apache
+    container_name: nextcloud
+    hostname: nextcloud
+    environment:
+      POSTGRES_HOST: nextcloud_db
+      POSTGRES_PASSWORD: nextcloud
+      POSTGRES_DB: nextcloud
+      POSTGRES_USER: nextcloud
+    ports:
+      - "${NC_PORT:-8500}:80"
+    restart: ${SHUFFLE_RESTART_POLICY:-unless-stopped}
+    volumes:
+      - ./nextcloud/nc_data:/var/www/html
+
+  nextcloud_db:
+    image: postgres:alpine
+    container_name: nextcloud-db
+    hostname: nextcloud-db
+    environment:
+      POSTGRES_PASSWORD: nextcloud
+      POSTGRES_DB: nextcloud
+      POSTGRES_USER: nextcloud
+    restart: ${SHUFFLE_RESTART_POLICY:-unless-stopped}
+    volumes:
+      - ./nextcloud/db_data:/var/lib/postgresql/data
+    expose:
+      - "5432"
+
+  collabora:
+    image: collabora/code
+    container_name: collabora
+    hostname: collabora
+    restart: ${SHUFFLE_RESTART_POLICY:-unless-stopped}
+    ports:
+      - "9980:9980"
+    extra_hosts:
+      - "${NC_FQDN}:${NC_IPADDRESS}"
+      - "${NC_COLLABORA_FQDN}:${NC_IPADDRESS}"
+    environment:
+      - "domain=${NC_FQDN}"
+      - "dictionaries=en"
+    cap_add:
+      - MKNOD
+    tty: true
+
+# --- Communication ---
+  mattermost-web:
+    image: mattermost/mattermost-enterprise-edition:9.5
+    container_name: mattermost-web
+    hostname: mattermost-web
+    restart: ${SHUFFLE_RESTART_POLICY:-unless-stopped}
+    depends_on:
+      - matter_db
+    ports:
+      - "${MATTERMOST_PORT:-8066}:443"
+    environment:
+      MM_SQLSETTINGS_DRIVERNAME: "postgres"
+      MM_SQLSETTINGS_DATASOURCE: "postgres://${MM_POSTGRES_USER}:${MM_POSTGRES_PASSWORD}@matter_db/${MM_POSTGRES_DB}?sslmode=disable&connect_timeout=10"
+      MM_SERVICESETTINGS_LISTENADDRESS: ":443"
+      MM_SERVICESETTINGS_SITEURL: "https://10.1.3.160:${MATTERMOST_PORT:-8066}"
+      MM_SERVICESETTINGS_ENABLEBOTACCOUNTCREATION: "true"
+      MM_SERVICESETTINGS_ENABLEUSERACCESSTOKENS: "true"
+      MM_SERVICESETTINGS_ENABLEOAUTHSERVICEPROVIDER: "true"
+      MM_SERVICESETTINGS_ENABLEDEVELOPER: "true"
+      MM_SERVICESETTINGS_ENABLETESTING: "true"
+      MM_PLUGINSETTINGS_AUTOMATICPREPACKAGEDPLUGINS: "true"
+      MM_EXPERIMENTALSETTINGS_ENABLEAPPBAR: "true"
+      MM_PLUGINSETTINGS_ENABLEUPLOADS: "true"
+      MM_LOGSETTINGS_CONSOLELEVEL: "DEBUG"
+      MM_LOGSETTINGS_FILELEVEL: "DEBUG"
+      MM_FILESETTINGS_MAXFILESIZE: 123524266
+      MM_FEATUREFLAGS_AppsEnabled: "true"
+      MM_FEATUREFLAGS_PluginApps: "1.1.0"
+      MM_SERVICESETTINGS_ENABLELOCALMODE: "true"
+      MM_SERVICESETTINGS_ALLOWEDUNTRUSTEDINTERNALCONNECTIONS: ""
+    volumes:
+      - ./mattermost/certs/key.pem:/etc/mattermost/cert/key.pem
+      - ./mattermost/certs/cert.pem:/etc/mattermost/cert/cert.pem
+
+  matter_db:
+    image: postgres
+    container_name: matter_db
+    hostname: matter_db
+    restart: ${SHUFFLE_RESTART_POLICY:-unless-stopped}
+    environment:
+      POSTGRES_PASSWORD: "${MM_POSTGRES_PASSWORD}"
+      POSTGRES_USER: "${MM_POSTGRES_USER}"
+      POSTGRES_DB: "${MM_POSTGRES_DB}"
+
+# --- Bookmarking ---
+  linkwarden:
+    image: ghcr.io/linkwarden/linkwarden:latest
+    container_name: linkwarden
+    hostname: linkwarden
+    restart: ${SHUFFLE_RESTART_POLICY:-unless-stopped}
+    depends_on:
+      - linkwarden-db
+    ports:
+      - "${LINKWARDEN_PORT:-4222}:3000"
+    environment:
+      DATABASE_URL: "postgresql://${LINKWARDEN_DB_USERS}:${LINKWARDEN_POSTGRES_PASSWORDS}@linkwarden-db:5432/${LINKWARDEN_DB_NAME}"
+      NEXTAUTH_SECRET: "${LINKWARDEN_NEXTAUTH_SECRET}"
+      NEXTAUTH_URL: "${LINKWARDEN_NEXTAUTH_URL:-http://localhost:${LINKWARDEN_PORT:-4222}/api/v1/auth}"
+    volumes:
+      - ./linkwarden/data:/data/data
+
+  linkwarden-db:
+    image: postgres:16-alpine
+    container_name: linkwarden-db
+    hostname: linkwarden-db
+    restart: ${SHUFFLE_RESTART_POLICY:-unless-stopped}
+    environment:
+      POSTGRES_USER: $LINKWARDEN_DB_USERS
+      POSTGRES_PASSWORD: $LINKWARDEN_POSTGRES_PASSWORDS
+      POSTGRES_DB: $LINKWARDEN_DB_NAME
+    volumes:
+      - ./linkwarden/pgdata:/var/lib/postgresql/data
+
+# --- Dashboard ---
+  homer:
+    image: b4bz/homer:latest
+    container_name: homer
+    hostname: homer
+    restart: ${SHUFFLE_RESTART_POLICY:-unless-stopped}
+    ports:
+      - "${HOMER_PORT:-80}:8080"
+    environment:
+      INIT_ASSETS: 1
+    volumes:
+      - ./homer/assets:/www/assets
+
+# --- GitLab ---
+  gitlab:
+    image: gitlab/gitlab-ce:${GITLAB_VERSION:-latest}
+    container_name: gitlab
+    hostname: gitlab
+    restart: ${SHUFFLE_RESTART_POLICY:-unless-stopped}
+    ports:
+      - "${GITLAB_PORT:-8520}:80"
+    volumes:
+      - ./gitlab/config:/etc/gitlab:rw
+      - ./gitlab/logs:/var/log/gitlab:rw
+      - ./gitlab/data:/var/opt/gitlab:rw
+
+# --- Volumes ---
+volumes:
+  nexterm:
+  etherpad-plugins:
+  etherpad-var:
+  etherpad-postgres_data:
+  nextcloud-db_data:
+  nextcloud-nc_data:
+  planka-db-data:
+  planka-user-avatars:
+  planka-project-background-images:
+  planka-attachments:
+  homer-assets:
+  gitlab-config:
+  gitlab-logs:
+  gitlab-data:
