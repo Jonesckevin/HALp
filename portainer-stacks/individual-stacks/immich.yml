@@ -83,8 +83,6 @@ services:
 volumes:
   model-cache:
 
-
-
 # .env
 #UPLOAD_LOCATION=./media
 #DB_DATA_LOCATION=./postgres
