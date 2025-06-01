@@ -7,8 +7,9 @@ Updating may be a challenge if the system is offline. So it is recommended to ha
 ### **Instructional Youtube Video**
 
 <a href="https://www.youtube.com/watch?v=_7cjBfB1x7Q">
-   <img src="https://i9.ytimg.com/vi/_7cjBfB1x7Q/sddefault.jpg?v=677c4c5a&sqp=CLyw8bsG&rs=AOn4CLCPn189_w0C8Q0yEPsST6UFR7rWlw" style="object-fit: cover; object-position: center; width: 40%; height: auto; aspect-ratio: 16/9; clip-path: inset(5% 0 5% 0);">
+   <img src="https://i.ytimg.com/vi/_7cjBfB1x7Q/hqdefault.jpg" style="object-fit: cover; object-position: center; width: 40%; height: auto; aspect-ratio: 16/9; clip-path: inset(5% 0 5% 0);">
 </a>
+<iframe src="https://www.youtube.com/embed/_7cjBfB1x7Q" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
 
 ## Template to add your own tool(s)
 
