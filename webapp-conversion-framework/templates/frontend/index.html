@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebApp Conversion Framework</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <link rel="stylesheet" href="/static/css/components.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Tourney:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Navigation Header -->
+    <header class="header">
+        <div class="container">
+            <div class="nav-brand">
+                <h1>WebApp Framework</h1>
+            </div>
+            <nav class="nav-menu">
+                <ul>
+                    <li><a href="#dashboard" class="nav-link active">Dashboard</a></li>
+                    <li><a href="#files" class="nav-link">Files</a></li>
+                    <li><a href="#transfers" class="nav-link">Transfers</a></li>
+                    <li><a href="#mounts" class="nav-link">SMB Mounts</a></li>
+                    <li><a href="#settings" class="nav-link">Settings</a></li>
+                </ul>
+            </nav>
+            <div class="user-menu">
+                <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
+                    🌙
+                </button>
+                <div class="user-info">
+                    <span id="user-email">user@example.com</span>
+                    <button class="logout-btn" onclick="logout()">Logout</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Dashboard Section -->
+        <section id="dashboard" class="section active">
+            <div class="container">
+                <h2>Dashboard</h2>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">📁</div>
+                        <div class="stat-content">
+                            <h3 id="total-files">0</h3>
+                            <p>Total Files</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">⬆️</div>
+                        <div class="stat-content">
+                            <h3 id="active-uploads">0</h3>
+                            <p>Active Uploads</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">🔄</div>
+                        <div class="stat-content">
+                            <h3 id="bits-transfers">0</h3>
+                            <p>BITS Transfers</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">🗂️</div>
+                        <div class="stat-content">
+                            <h3 id="smb-mounts">0</h3>
+                            <p>SMB Mounts</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="recent-activity">
+                    <h3>Recent Activity</h3>
+                    <div id="activity-list" class="activity-list">
+                        <!-- Activity items will be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Files Section -->
+        <section id="files" class="section">
+            <div class="container">
+                <h2>File Management</h2>
+                
+                <!-- File Upload Area -->
+                <div class="upload-area">
+                    <div id="drop-zone" class="drop-zone" onclick="document.getElementById('file-input').click()">
+                        <div class="drop-zone-content">
+                            <div class="drop-icon">📁</div>
+                            <h3>Upload Files</h3>
+                            <p>Drag and drop files here or click to select</p>
+                            <p class="file-types">Supported: Images, PDFs, Documents, Archives</p>
+                        </div>
+                        <input type="file" id="file-input" multiple accept="image/*,.pdf,.txt,.json,.zip" style="display: none;">
+                    </div>
+                    <div id="upload-progress" class="upload-progress hidden">
+                        <div class="progress-header">
+                            <h4>Uploading Files...</h4>
+                            <button class="cancel-btn" onclick="cancelUploads()">Cancel</button>
+                        </div>
+                        <div id="upload-list" class="upload-list">
+                            <!-- Upload progress items will be added here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- File List -->
+                <div class="file-list-container">
+                    <div class="list-header">
+                        <h3>Your Files</h3>
+                        <div class="list-controls">
+                            <input type="search" id="file-search" placeholder="Search files..." class="search-input">
+                            <select id="file-filter" class="filter-select">
+                                <option value="all">All Files</option>
+                                <option value="images">Images</option>
+                                <option value="documents">Documents</option>
+                                <option value="archives">Archives</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="file-list" class="file-list">
+                        <!-- File items will be populated by JavaScript -->
+                    </div>
+                    <div class="pagination">
+                        <button id="prev-page" class="pagination-btn" disabled>Previous</button>
+                        <span id="page-info">Page 1 of 1</span>
+                        <button id="next-page" class="pagination-btn" disabled>Next</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- BITS Transfers Section -->
+        <section id="transfers" class="section">
+            <div class="container">
+                <h2>BITS Transfers</h2>
+                
+                <!-- New Transfer Form -->
+                <div class="transfer-form">
+                    <h3>Start New Transfer</h3>
+                    <form id="bits-form" class="form">
+                        <div class="form-group">
+                            <label for="source-path">Source Path:</label>
+                            <input type="text" id="source-path" placeholder="C:\source\file.txt" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="dest-path">Destination Path:</label>
+                            <input type="text" id="dest-path" placeholder="\\server\share\file.txt" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="transfer-priority">Priority:</label>
+                            <select id="transfer-priority">
+                                <option value="normal">Normal</option>
+                                <option value="high">High</option>
+                                <option value="low">Low</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Start Transfer</button>
+                    </form>
+                </div>
+
+                <!-- Transfer List -->
+                <div class="transfer-list-container">
+                    <h3>Active Transfers</h3>
+                    <div id="transfer-list" class="transfer-list">
+                        <!-- Transfer items will be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SMB Mounts Section -->
+        <section id="mounts" class="section">
+            <div class="container">
+                <h2>SMB Share Management</h2>
+                
+                <!-- Mount Form -->
+                <div class="mount-form">
+                    <h3>Mount SMB Share</h3>
+                    <form id="smb-form" class="form">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="smb-server">Server:</label>
+                                <input type="text" id="smb-server" placeholder="server.domain.com" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="smb-share">Share:</label>
+                                <input type="text" id="smb-share" placeholder="sharename" required>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="smb-username">Username:</label>
+                                <input type="text" id="smb-username" placeholder="username" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="smb-password">Password:</label>
+                                <input type="password" id="smb-password" placeholder="password" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="smb-domain">Domain (optional):</label>
+                            <input type="text" id="smb-domain" placeholder="domain.com">
+                        </div>
+                        <button type="submit" class="btn btn-primary">Mount Share</button>
+                    </form>
+                </div>
+
+                <!-- Mounted Shares List -->
+                <div class="mount-list-container">
+                    <h3>Mounted Shares</h3>
+                    <div id="mount-list" class="mount-list">
+                        <!-- Mount items will be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Settings Section -->
+        <section id="settings" class="section">
+            <div class="container">
+                <h2>Settings</h2>
+                <div class="settings-grid">
+                    <div class="setting-group">
+                        <h3>File Upload Settings</h3>
+                        <div class="setting-item">
+                            <label for="max-file-size">Maximum File Size (MB):</label>
+                            <input type="number" id="max-file-size" value="100" min="1" max="1000">
+                        </div>
+                        <div class="setting-item">
+                            <label>
+                                <input type="checkbox" id="auto-process" checked>
+                                Auto-process uploaded files
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="setting-group">
+                        <h3>Transfer Settings</h3>
+                        <div class="setting-item">
+                            <label for="default-priority">Default Transfer Priority:</label>
+                            <select id="default-priority">
+                                <option value="normal">Normal</option>
+                                <option value="high">High</option>
+                                <option value="low">Low</option>
+                            </select>
+                        </div>
+                        <div class="setting-item">
+                            <label>
+                                <input type="checkbox" id="resume-transfers" checked>
+                                Resume interrupted transfers
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="setting-group">
+                        <h3>Notifications</h3>
+                        <div class="setting-item">
+                            <label>
+                                <input type="checkbox" id="notify-uploads" checked>
+                                Notify on upload completion
+                            </label>
+                        </div>
+                        <div class="setting-item">
+                            <label>
+                                <input type="checkbox" id="notify-transfers" checked>
+                                Notify on transfer completion
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <button class="btn btn-primary" onclick="saveSettings()">Save Settings</button>
+            </div>
+        </section>
+    </main>
+
+    <!-- Modals -->
+    <div id="modal-overlay" class="modal-overlay hidden">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 id="modal-title">Modal Title</h3>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="modal-body">
+                <!-- Modal content will be inserted here -->
+            </div>
+            <div class="modal-footer" id="modal-footer">
+                <!-- Modal buttons will be inserted here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div id="toast-container" class="toast-container">
+        <!-- Toast notifications will be added here -->
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="loading-overlay hidden">
+        <div class="loading-spinner">
+            <div class="spinner"></div>
+            <p id="loading-message">Loading...</p>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="/static/js/api.js"></script>
+    <script src="/static/js/auth.js"></script>
+    <script src="/static/js/files.js"></script>
+    <script src="/static/js/transfers.js"></script>
+    <script src="/static/js/mounts.js"></script>
+    <script src="/static/js/ui.js"></script>
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
