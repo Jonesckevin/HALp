@@ -1,9 +1,0 @@
-
-services:
-  photopea:
-    image: eorendel/photopea:latest
-    container_name: Photopea
-    hostname: photopea
-    restart: unless-stopped
-    ports:
-      - "8120:8887"
